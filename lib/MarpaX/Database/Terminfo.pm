@@ -34,17 +34,18 @@ our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[
                     )/x;
 
 #
-# It is important to have NUMERIC and STRING before BOOLEAN because
-# BOOLEAN is a subset of them
+# It is important to have LONGNAME before ALIAS because LONGNAME will do a lookahead on COMMA
+# It is important to have NUMERIC and STRING before BOOLEAN because BOOLEAN is a subset of them
 #
 our @TOKENSRE = (
-    [ 'ALIASINCOLUMNONE' , qr/\G^\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias}+/ ],
-    [ 'PIPE'             , qr/\G\|/ ],
-    [ 'LONGNAME'         , qr/\G\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InLongname}+/ ],
-    [ 'NUMERIC'          , qr/\G\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+#$I_CONSTANT/ ],
-    [ 'STRING'           , qr/\G\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+=\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma}+/ ],
-    [ 'BOOLEAN'          , qr/\G\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+/ ],
-    [ 'COMMA'            , qr/\G, ?/ ],
+    [ 'ALIASINCOLUMNONE' , qr/\G^(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias}+)/ ],
+    [ 'PIPE'             , qr/\G(\|)/ ],
+    [ 'LONGNAME'         , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InLongname}+),/ ],
+    [ 'ALIAS'            , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias}+)/ ],
+    [ 'NUMERIC'          , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+#$I_CONSTANT)/ ],
+    [ 'STRING'           , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+=\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma}+)/ ],
+    [ 'BOOLEAN'          , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+)/ ],
+    [ 'COMMA'            , qr/\G(, ?)/ ],
     );
 
 my %events = (
@@ -55,11 +56,13 @@ my %events = (
 	my $prev = pos(${$bufferp});
 	pos(${$bufferp}) = $start;
 	my $ok = 0;
+	# print STDERR "@expected\n";
 	foreach (@TOKENSRE) {
 	    my ($token, $re) = @{$_};
 	    if ((grep {$_ eq $token} @expected) && ${$bufferp} =~ $re) {
-		$length = $+[0] - $-[0];
+		$length = $+[1] - $-[1];
 		$string = substr(${$bufferp}, $start, $length);
+		# print "OK: $token $string\n";
 		$recce->lexeme_read($token, $start, $length, $string);
 		$ok = 1;
 		last;
