@@ -1,0 +1,22 @@
+Changelog for MarpaX-Database-Terminfo
+
+0.001 2013-08-07T09:54:23
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Add README.pod
+ - Initial Changes and META.json
+ - Corrected  .gitignore
+ - Removed non needed use Data::Dumper
+ - Updated test
+ - Doc
+ - test unit from HP man page
+ - Renamed main.t to test1.t
+ - Add spaces to MAXMATCH stuff
+ - No need of character class InSeparator
+ - space optional after comma at longname lookahead
+ - lookahead of comma to longname
+ - First version
+ - Initial commit
+
+ [jddurand <jeandamiendurand@free.fr>]
+ - Initial commit
+
