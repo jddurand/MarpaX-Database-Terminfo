@@ -11,10 +11,7 @@ BEGIN {
 
 my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
-$terminfo->parse(\$buffer);
-while (defined(my $value = $terminfo->value())) {
-    print Dumper($value);
-}
+$terminfo->parse(\$buffer)->value();
 
 __DATA__
 ansi|ansi/pc-term compatible with color,

@@ -11,10 +11,7 @@ BEGIN {
 
 my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
-$terminfo->parse(\$buffer);
-while (defined(my $value = $terminfo->value())) {
-    print Dumper($value);
-}
+$terminfo->parse(\$buffer)->value();
 
 __DATA__
 610|610bct|ATT610|att610|AT&T610;80column;98key keyboard,
