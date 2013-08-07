@@ -42,20 +42,6 @@ $POUND_HEX
 END
 }
 
-#
-# Exhaustive list of all separators, otherwise Marpa will
-# catch the longest token even for a token out of context
-#
-sub InSeparator {
-    return <<END;
-$COMMA_HEX
-$SLASH_HEX
-$PIPE_HEX
-$EQUAL_HEX
-$POUND_HEX
-END
-}
-
 sub InComma {
     return <<END;
 $COMMA_HEX
