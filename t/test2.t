@@ -2,7 +2,6 @@
 use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 1;
-use Data::Dumper;
 
 BEGIN {
     push(@INC, 'inc');
