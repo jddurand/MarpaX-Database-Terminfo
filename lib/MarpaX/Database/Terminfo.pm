@@ -46,6 +46,7 @@ our @TOKENSRE = (
     [ 'STRING'           , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+=\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma}+)/ ],
     [ 'BOOLEAN'          , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+)/ ],
     [ 'COMMA'            , qr/\G(, ?)/ ],
+    [ 'WS_many'          , qr/\G( +)/ ],
     );
 
 my %events = (
@@ -56,13 +57,17 @@ my %events = (
 	my $prev = pos(${$bufferp});
 	pos(${$bufferp}) = $start;
 	my $ok = 0;
-	# print STDERR "@expected\n";
+	if ($log->is_debug) {
+	    $log->debugf('Expected terminals: %s', \@expected);
+	}
 	foreach (@TOKENSRE) {
 	    my ($token, $re) = @{$_};
 	    if ((grep {$_ eq $token} @expected) && ${$bufferp} =~ $re) {
 		$length = $+[1] - $-[1];
 		$string = substr(${$bufferp}, $start, $length);
-		# print "OK: $token $string\n";
+		if ($log->is_debug) {
+		    $log->debugf('lexeme_read(\'%s\', %d, %d, \"%s\")', $token, $start, $length, $string);
+		}
 		$recce->lexeme_read($token, $start, $length, $string);
 		$ok = 1;
 		last;

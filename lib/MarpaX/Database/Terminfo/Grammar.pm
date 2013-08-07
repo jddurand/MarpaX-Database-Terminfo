@@ -94,9 +94,9 @@ feature ::= (comma) boolean
 # Special cases
 #
 startOfHeaderLine       ::= aliasInColumnOne
-startFeatureLineBoolean ::= (WS_many) boolean
-startFeatureLineNumeric ::= (WS_many) numeric
-startFeatureLineString  ::= (WS_many) string
+startFeatureLineBoolean ::= (spaces) boolean
+startFeatureLineNumeric ::= (spaces) numeric
+startFeatureLineString  ::= (spaces) string
 
 #
 # G0
@@ -134,6 +134,7 @@ numeric               ::= MAXMATCH | NUMERIC
 string                ::= MAXMATCH | STRING
 pipe                  ::= MAXMATCH | PIPE
 comma                 ::= MAXMATCH | COMMA
+spaces                ::= MAXMATCH | WS_many
 
 COMMENT               ~ WS_any POUND NOT_NEWLINE_any _NEWLINE
 :discard              ~ COMMENT
