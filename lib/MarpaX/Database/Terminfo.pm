@@ -70,7 +70,7 @@ our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[
 # In these regexps we add the embedded comma: \, (i.e. these are TWO characters)
 #
 our @TOKENSRE = (
-    [ 'ALIASINCOLUMNONE' , qr/(?:\A|\n)\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
+    [ 'ALIASINCOLUMNONE' , qr/\G^((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ms ],
     [ 'PIPE'             , qr/\G(\|)/ ],
     [ 'LONGNAME'         , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InNcursesLongname})+), ?/ ],
     [ 'ALIAS'            , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
@@ -80,8 +80,8 @@ our @TOKENSRE = (
     [ 'COMMA'            , qr/\G(, ?)/ ],
     [ 'NEWLINE'          , qr/\G(\n)/ ],
     [ 'WS_many'          , qr/\G( +)/ ],
-    [ 'BLANKLINE'        , qr/\G(?:\A|\n)([ \t]*\n)/ ],
-    [ 'COMMENT'          , qr/\G(?:\A|\n)([ \t]*#[^\n]*\n)/ ],
+    [ 'BLANKLINE'        , qr/\G^([ \t]*\n)/ms ],
+    [ 'COMMENT'          , qr/\G^([ \t]*#[^\n]*\n)/ms ],
     );
 
 my %events = (
