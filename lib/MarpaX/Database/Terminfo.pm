@@ -17,7 +17,7 @@ use Carp qw/croak/;
 
 This module parses a terminfo database and produces an AST from it. If you want to enable logging, be aware that this module is a Log::Any thingy.
 
-The grammar is the one found at L<http://nixdoc.net/man-pages/HP-UX/man4/terminfo.4.html#Formal%20Grammar>.
+The grammar is a slightly revisited version of the one found at L<http://nixdoc.net/man-pages/HP-UX/man4/terminfo.4.html#Formal%20Grammar>, taking into account ncurses compatibility.
 
 =head1 SYNOPSIS
 
@@ -194,5 +194,13 @@ sub value {
     }
     return $rc
 }
+
+=head1 SEE ALSO
+
+L<Unix Documentation Project - terminfo|http://nixdoc.net/man-pages/HP-UX/man4/terminfo.4.html#Formal%20Grammar>
+
+L<GNU Ncurses|http://www.gnu.org/software/ncurses/>
+
+=cut
 
 1;
