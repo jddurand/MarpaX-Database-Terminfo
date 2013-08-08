@@ -34,6 +34,12 @@ $PIPE_HEX
 END
 }
 
+sub InPipe {
+    return <<END;
+$PIPE_HEX
+END
+}
+
 sub InCommaEqualPound {
     return <<END;
 $COMMA_HEX
@@ -59,6 +65,13 @@ sub InLongname {
     return <<END;
 +utf8::IsPrint
 -MarpaX::Database::Terminfo::Grammar::CharacterClasses::InCommaPipe
+END
+}
+
+sub InNcursesLongname {
+    return <<END;
++utf8::IsPrint
+-MarpaX::Database::Terminfo::Grammar::CharacterClasses::InPipe
 END
 }
 

@@ -48,6 +48,7 @@ The grammar is the one found at L<http://nixdoc.net/man-pages/HP-UX/man4/terminf
 
 =cut
 
+our $ESCAPED_COMMA = qr/(?<!\\)(?>\\\\)*\\,/;                                                       # Takes care of backslash'ed backslash
 our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)             # Hexadecimal
                       |([1-9][0-9]*(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)                    # Decimal
                       |(0[0-7]*(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)                        # Octal
@@ -57,17 +58,22 @@ our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[
 #
 # It is important to have LONGNAME before ALIAS because LONGNAME will do a lookahead on COMMA
 # It is important to have NUMERIC and STRING before BOOLEAN because BOOLEAN is a subset of them
+# It is important to have BLANKLINE and COMMENT at the end: they are 'discarded' by the grammar
+# In these regexps we add the embedded comma: \, (i.e. these are TWO characters)
 #
 our @TOKENSRE = (
-    [ 'ALIASINCOLUMNONE' , qr/\G^(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias}+)/ ],
+    [ 'ALIASINCOLUMNONE' , qr/(?:\A|\n)\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
     [ 'PIPE'             , qr/\G(\|)/ ],
-    [ 'LONGNAME'         , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InLongname}+), ?/ ],
-    [ 'ALIAS'            , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias}+)/ ],
-    [ 'NUMERIC'          , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+#$I_CONSTANT)/ ],
-    [ 'STRING'           , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+=\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma}+)/ ],
-    [ 'BOOLEAN'          , qr/\G(\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName}+)/ ],
+    [ 'LONGNAME'         , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InNcursesLongname})+), ?/ ],
+    [ 'ALIAS'            , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
+    [ 'NUMERIC'          , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+#$I_CONSTANT)/ ],
+    [ 'STRING'           , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+=(?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma})*)/ ],
+    [ 'BOOLEAN'          , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+)/ ],
     [ 'COMMA'            , qr/\G(, ?)/ ],
+    [ 'NEWLINE'          , qr/\G(\n)/ ],
     [ 'WS_many'          , qr/\G( +)/ ],
+    [ 'BLANKLINE'        , qr/\G(?:\A|\n)([ \t]*\n)/ ],
+    [ 'COMMENT'          , qr/\G(?:\A|\n)([ \t]*#[^\n]*\n)/ ],
     );
 
 my %events = (
@@ -83,18 +89,24 @@ my %events = (
 	}
 	foreach (@TOKENSRE) {
 	    my ($token, $re) = @{$_};
-	    if ((grep {$_ eq $token} @expected) && ${$bufferp} =~ $re) {
-		$length = $+[1] - $-[1];
-		$string = substr(${$bufferp}, $start, $length);
-		if ($log->is_debug) {
-		    $log->debugf('lexeme_read(\'%s\', %d, %d, \"%s\")', $token, $start, $length, $string);
+	    if ((grep {$_ eq $token} @expected)) {
+		if (${$bufferp} =~ $re) {
+		    $length = $+[1] - $-[1];
+		    $string = substr(${$bufferp}, $start, $length);
+		    if ($log->is_debug) {
+			$log->debugf('lexeme_read(\'%s\', %d, %d, "%s")', $token, $start, $length, $string);
+		    }
+		    $recce->lexeme_read($token, $start, $length, $string);
+		    $ok = 1;
+		    last;
+		} else {
+		    if ($log->is_trace) {
+			$log->tracef('\"%s\"... does not match %s', substr(${$bufferp}, $start, 20), $re);
+		    }
 		}
-		$recce->lexeme_read($token, $start, $length, $string);
-		$ok = 1;
-		last;
 	    }
 	}
-	die "Unmatched token in @expected" if (! $ok);
+	die "Unmatched token in @expected, current portion of string is \"$string\"" if (! $ok);
 	pos(${$bufferp}) = $prev;
     },
 );
