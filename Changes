@@ -1,7 +1,24 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.002 2013-08-08T11:45:47
+0.003 2013-08-08T16:56:33
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - CopyFilesFromBuild / README.pod
+ - Quicker regexp
+
+0.002 2013-08-08T11:49:51
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - v0.002
+   
+    [Jean-Damien Durand <jeandamiendurand@free.fr>]
+    - Remove Log::Log4perl from t/ncurses.t
+    - Backskashed three octal digits
+    - Escape characters fix: escape char is ^, and there is a fixed list of
+      allowed backslashed characters
+    - use terminfo.src from ncurses-5.9
+    - SEE ALSO section
+    - Favor README.pod instead of README.md
+    - ncurses.t
+    - Ncurses extension, escapes comma, move everything to G1
  - Remove Log::Log4perl from t/ncurses.t
  - Backskashed three octal digits
  - Escape characters fix: escape char is ^, and there is a fixed list of
