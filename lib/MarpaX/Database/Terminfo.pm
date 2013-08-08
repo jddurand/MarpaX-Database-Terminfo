@@ -54,7 +54,7 @@ The grammar is a slightly revisited version of the one found at L<http://nixdoc.
 # \x where x can be a b E e f l n r s t ^ \ , : 0
 #
 our $CONTROLX      = qr/(?<!\^)(?>\^\^)*\^./;                                                       # Takes care of ^^
-our $ALLOWED_BACKSLASHED_CHARACTERS = qr/(?:a|b|E|e|f|l|n|r|s|t|\^|\\|,|:|0)/;
+our $ALLOWED_BACKSLASHED_CHARACTERS = qr/(?:a|b|E|e|f|l|n|r|s|t|\^|\\|,|:|0|\d{3})/;
 our $BACKSLASHX    = qr/(?<!\\)(?>\\\\)*\\$ALLOWED_BACKSLASHED_CHARACTERS/;                         # Takes care of \\
 our $ESCAPED       = qr/(?:$CONTROLX|$BACKSLASHX)/;
 our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)             # Hexadecimal
