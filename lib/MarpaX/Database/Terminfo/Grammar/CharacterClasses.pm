@@ -19,6 +19,12 @@ our $PIPE_HEX   = sprintf('%x', ord('|'));
 our $EQUAL_HEX  = sprintf('%x', ord('='));
 our $POUND_HEX  = sprintf('%x', ord('#'));
 
+=head2 InCommaSlashPipe()
+
+Character class for ',', '/' and '|'.
+
+=cut
+
 sub InCommaSlashPipe {
     return <<END;
 $COMMA_HEX
@@ -27,6 +33,12 @@ $PIPE_HEX
 END
 }
 
+=head2 InCommaPipe()
+
+Character class for ',' and '|'.
+
+=cut
+
 sub InCommaPipe {
     return <<END;
 $COMMA_HEX
@@ -34,11 +46,23 @@ $PIPE_HEX
 END
 }
 
+=head2 InPipe()
+
+Character class for '|'.
+
+=cut
+
 sub InPipe {
     return <<END;
 $PIPE_HEX
 END
 }
+
+=head2 InCommaEqualPound()
+
+Character class for ',', '=' and '#'
+
+=cut
 
 sub InCommaEqualPound {
     return <<END;
@@ -48,11 +72,23 @@ $POUND_HEX
 END
 }
 
+=head2 InComma()
+
+Character class for ','
+
+=cut
+
 sub InComma {
     return <<END;
 $COMMA_HEX
 END
 }
+
+=head2 InAlias()
+
+Character class for a terminfo alias.
+
+=cut
 
 sub InAlias {
     return <<END;
@@ -61,12 +97,24 @@ sub InAlias {
 END
 }
 
+=head2 InLongname()
+
+Character class for a terminfo long name.
+
+=cut
+
 sub InLongname {
     return <<END;
 +utf8::IsPrint
 -MarpaX::Database::Terminfo::Grammar::CharacterClasses::InCommaPipe
 END
 }
+
+=head2 InNcursesLongname()
+
+Character class for a (ncurses) terminfo long name.
+
+=cut
 
 sub InNcursesLongname {
     return <<END;
@@ -75,6 +123,12 @@ sub InNcursesLongname {
 END
 }
 
+=head2 InName()
+
+Character class for a terminfo capability name.
+
+=cut
+
 sub InName {
     return <<END;
 +utf8::IsPrint
@@ -82,12 +136,24 @@ sub InName {
 END
 }
 
+=head2 InIsPrintExceptComma()
+
+Character class for a isprint character except ','.
+
+=cut
+
 sub InIsPrintExceptComma {
     return <<END;
 +utf8::IsPrint
 -MarpaX::Database::Terminfo::Grammar::CharacterClasses::InComma
 END
 }
+
+=head2 InIsPrintAndIsGraph()
+
+Character class for a isprint or isgraph character
+
+=cut
 
 sub InIsPrintAndIsGraph {
     return <<END;

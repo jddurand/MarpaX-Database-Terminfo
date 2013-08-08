@@ -176,7 +176,7 @@ sub parse {
 # ----------------------------------------------------------------------------------------
 =head2 value($self)
 
-Returns Marpa's value on the parse tree. Ambiguous parse tree result is disabled and the module will croak if this happen.
+Returns Marpa value on the parse tree. Ambiguous parse tree result is disabled and the module will croak if this happen.
 
 =cut
 
