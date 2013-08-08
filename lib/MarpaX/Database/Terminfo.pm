@@ -48,7 +48,15 @@ The grammar is a slightly revisited version of the one found at L<http://nixdoc.
 
 =cut
 
-our $ESCAPED_COMMA = qr/(?<!\\)(?>\\\\)*\\,/;                                                       # Takes care of backslash'ed backslash
+#
+# List of escaped characters allowed in terminfo source files
+# ^x : Control-x (for any appropriate x)
+# \x where x can be a b E e f l n r s t ^ \ , : 0
+#
+our $CONTROLX      = qr/(?<!\^)(?>\^\^)*\^./;                                                       # Takes care of ^^
+our $ALLOWED_BACKSLASHED_CHARACTERS = qr/(?:a|b|E|e|f|l|n|r|s|t|\^|\\|,|:|0)/;
+our $BACKSLASHX    = qr/(?<!\\)(?>\\\\)*\\$ALLOWED_BACKSLASHED_CHARACTERS/;                         # Takes care of \\
+our $ESCAPED       = qr/(?:$CONTROLX|$BACKSLASHX)/;
 our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)             # Hexadecimal
                       |([1-9][0-9]*(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)                    # Decimal
                       |(0[0-7]*(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)                        # Octal
@@ -62,13 +70,13 @@ our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[
 # In these regexps we add the embedded comma: \, (i.e. these are TWO characters)
 #
 our @TOKENSRE = (
-    [ 'ALIASINCOLUMNONE' , qr/(?:\A|\n)\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
+    [ 'ALIASINCOLUMNONE' , qr/(?:\A|\n)\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
     [ 'PIPE'             , qr/\G(\|)/ ],
-    [ 'LONGNAME'         , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InNcursesLongname})+), ?/ ],
-    [ 'ALIAS'            , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
-    [ 'NUMERIC'          , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+#$I_CONSTANT)/ ],
-    [ 'STRING'           , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+=(?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma})*)/ ],
-    [ 'BOOLEAN'          , qr/\G((?:$ESCAPED_COMMA|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+)/ ],
+    [ 'LONGNAME'         , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InNcursesLongname})+), ?/ ],
+    [ 'ALIAS'            , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ ],
+    [ 'NUMERIC'          , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+#$I_CONSTANT)/ ],
+    [ 'STRING'           , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+=(?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma})*)/ ],
+    [ 'BOOLEAN'          , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+)/ ],
     [ 'COMMA'            , qr/\G(, ?)/ ],
     [ 'NEWLINE'          , qr/\G(\n)/ ],
     [ 'WS_many'          , qr/\G( +)/ ],
@@ -84,8 +92,8 @@ my %events = (
 	my $prev = pos(${$bufferp});
 	pos(${$bufferp}) = $start;
 	my $ok = 0;
-	if ($log->is_debug) {
-	    $log->debugf('Expected terminals: %s', \@expected);
+	if ($log->is_trace) {
+	    $log->tracef('Expected terminals: %s', \@expected);
 	}
 	foreach (@TOKENSRE) {
 	    my ($token, $re) = @{$_};
@@ -93,8 +101,10 @@ my %events = (
 		if (${$bufferp} =~ $re) {
 		    $length = $+[1] - $-[1];
 		    $string = substr(${$bufferp}, $start, $length);
-		    if ($log->is_debug) {
-			$log->debugf('lexeme_read(\'%s\', %d, %d, "%s")', $token, $start, $length, $string);
+		    if ($log->is_debug && $token eq 'LONGNAME') {
+			$log->debugf('%s "%s")', $token, $string);
+		    } elsif ($log->is_trace) {
+			$log->tracef('lexeme_read(token=%s, start=%d, length=%d, string="%s")', $token, $start, $length, $string);
 		    }
 		    $recce->lexeme_read($token, $start, $length, $string);
 		    $ok = 1;
