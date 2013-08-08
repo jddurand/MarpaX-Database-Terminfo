@@ -1,7 +1,16 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.003 2013-08-08T16:56:33
+0.004 2013-08-08T17:16:35
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Enabled CheckChangesHasContent and CheckExtraTests
+
+0.003 2013-08-08T16:59:04
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - v0.003
+   
+    [Jean-Damien Durand <jeandamiendurand@free.fr>]
+    - CopyFilesFromBuild / README.pod
+    - Quicker regexp
  - CopyFilesFromBuild / README.pod
  - Quicker regexp
 
