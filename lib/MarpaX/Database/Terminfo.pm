@@ -66,9 +66,7 @@ our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[
 #
 # It is important to have LONGNAME before ALIAS because LONGNAME will do a lookahead on COMMA
 # It is important to have NUMERIC and STRING before BOOLEAN because BOOLEAN is a subset of them
-# It is important to have BLANKLINE and COMMENT at the end: they are 'discarded' by the grammar
 # In these regexps we add the embedded comma: \, (i.e. these are TWO characters)
-#
 our @TOKENSRE = (
     [ 'ALIASINCOLUMNONE' , qr/\G^((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InAlias})+)/ms ],
     [ 'PIPE'             , qr/\G(\|)/ ],
@@ -78,10 +76,6 @@ our @TOKENSRE = (
     [ 'STRING'           , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+=(?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintExceptComma})*)/ ],
     [ 'BOOLEAN'          , qr/\G((?:$ESCAPED|\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InName})+)/ ],
     [ 'COMMA'            , qr/\G(, ?)/ ],
-    [ 'NEWLINE'          , qr/\G(\n)/ ],
-    [ 'WS_many'          , qr/\G( +)/ ],
-    [ 'BLANKLINE'        , qr/\G^([ \t]*\n)/ms ],
-    [ 'COMMENT'          , qr/\G^([ \t]*#[^\n]*\n)/ms ],
     );
 
 my %events = (
@@ -92,9 +86,6 @@ my %events = (
 	my $prev = pos(${$bufferp});
 	pos(${$bufferp}) = $start;
 	my $ok = 0;
-	if ($log->is_trace) {
-	    $log->tracef('Expected terminals: %s', \@expected);
-	}
 	foreach (@TOKENSRE) {
 	    my ($token, $re) = @{$_};
 	    if ((grep {$_ eq $token} @expected)) {
@@ -104,15 +95,11 @@ my %events = (
 		    if ($log->is_debug && $token eq 'LONGNAME') {
 			$log->debugf('%s "%s")', $token, $string);
 		    } elsif ($log->is_trace) {
-			$log->tracef('lexeme_read(token=%s, start=%d, length=%d, string="%s")', $token, $start, $length, $string);
+			$log->tracef('%s "%s")', $token, $string);
 		    }
 		    $recce->lexeme_read($token, $start, $length, $string);
 		    $ok = 1;
 		    last;
-		} else {
-		    if ($log->is_trace) {
-			$log->tracef('\"%s\"... does not match %s', substr(${$bufferp}, $start, 20), $re);
-		    }
 		}
 	    }
 	}

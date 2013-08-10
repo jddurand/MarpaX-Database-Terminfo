@@ -73,17 +73,15 @@ terminfoList ::= terminfo+
 # Ncurses: restOfHeaderLine is optional
 #
 terminfo ::= startOfHeaderLine restOfHeaderLine featureLines
-           | startOfHeaderLine (comma newline) featureLines
-           | (blankline)
-           | (comment)
+           | startOfHeaderLine (comma NEWLINE) featureLines
 
-restOfHeaderLine ::= (pipe) longname (comma newline)
-                   | aliases (pipe) longname (comma newline)
+restOfHeaderLine ::= (pipe) longname (comma NEWLINE)
+                   | aliases (pipe) longname (comma NEWLINE)
 
 featureLines ::= featureLine+
 
-featureLine ::= startFeatureLine features (comma newline)
-              | startFeatureLine (comma newline)
+featureLine ::= startFeatureLine features (comma NEWLINE)
+              | startFeatureLine (comma NEWLINE)
 
 startFeatureLine ::= startFeatureLineBoolean
                    | startFeatureLineNumeric
@@ -102,9 +100,9 @@ feature ::= (comma) boolean
 # Special cases
 #
 startOfHeaderLine       ::= aliasInColumnOne
-startFeatureLineBoolean ::= (spaces) boolean
-startFeatureLineNumeric ::= (spaces) numeric
-startFeatureLineString  ::= (spaces) string
+startFeatureLineBoolean ::= (WS_many) boolean
+startFeatureLineNumeric ::= (WS_many) numeric
+startFeatureLineString  ::= (WS_many) string
 
 #
 # G0
@@ -120,7 +118,6 @@ COMMA                 ~ ',' WS_maybe
 POUND                 ~ '#'
 EQUAL                 ~ '='
 _NEWLINE              ~ [\n]
-#_NEWLINES             ~ _NEWLINE+
 NEWLINE               ~ _NEWLINE
 NOT_NEWLINE_any       ~ [^\n]*
 
@@ -142,8 +139,6 @@ STRING                ~ _NAME EQUAL _INISPRINTEXCEPTCOMMA
 # Ncurses: STRING capability can be empty
 #
 STRING                ~ _NAME EQUAL
-BLANKLINE             ~ WS_any _NEWLINE
-COMMENT               ~ WS_any POUND NOT_NEWLINE_any _NEWLINE
 
 alias                 ::= MAXMATCH | ALIAS
 aliasInColumnOne      ::= MAXMATCH | ALIASINCOLUMNONE
@@ -153,11 +148,19 @@ numeric               ::= MAXMATCH | NUMERIC
 string                ::= MAXMATCH | STRING
 pipe                  ::= MAXMATCH | PIPE
 comma                 ::= MAXMATCH | COMMA
-newline               ::= MAXMATCH | NEWLINE
-spaces                ::= MAXMATCH | WS_many
-blankline             ::= MAXMATCH | BLANKLINE
-comment               ::= MAXMATCH | COMMENT
 
+#
+# COMMENTS can be eated by discard only if they begin by a newline
+# so instead of putting at the end of a newline we put it at the
+# beginning. Remains the very first comment on the first line.
+# This is handle with the G0 rule BEGLINE that contains START_OF_BUFFER.
+# START_OF_BUFFER is a character class that matches nothing...
+# The remaining newline is eated by BLANKLINE -;
+#
+COMMENT   ~ WS_any POUND NOT_NEWLINE_any _NEWLINE
+BLANKLINE ~ WS_any _NEWLINE
+:discard  ~ COMMENT
+:discard  ~ BLANKLINE
 #
 # I_CONSTANT from C point of view
 #
