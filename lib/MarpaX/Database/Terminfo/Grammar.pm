@@ -55,7 +55,7 @@ sub content {
     return $self->{_content};
 }
 
-=head2 grammar_option()
+=head2 grammar_option($self)
 
 Returns recommended option for Marpa::R2::Scanless::G->new(), returned as a reference to a hash.
 
@@ -66,7 +66,7 @@ sub grammar_option {
     return $self->{_grammar_option};
 }
 
-=head2 recce_option()
+=head2 recce_option($self)
 
 Returns recommended option for Marpa::R2::Scanless::R->new(), returned as a reference to a hash.
 
