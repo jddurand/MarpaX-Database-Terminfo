@@ -16,7 +16,7 @@ my $value = $terminfo->parse(\$buffer)->value();
 my $outfile = File::Spec->catfile('share', 'ncurses-terminfo.storable');
 open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
 print STDERR "Writing ncurses database with Storable into $outfile\n";
-store_fd $value, \*OUTFILE;
+store_fd ${$value}, \*OUTFILE;
 close(OUTFILE) || warn "Cannot close $outfile, $!\n";
 exit(EXIT_SUCCESS);
 
