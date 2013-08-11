@@ -1,7 +1,27 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.004 2013-08-08T17:16:35
+0.005 2013-08-11T22:33:53
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - share/ncurses-terminfo.storable is build manually, letting it here but
+   commented
+ - Commented Run::BeforeBuild, added share/ncurses-terminfo.storable, yet
+   another attempt to get dirty file commited at release
+ - pre-digested ncurses database using Storage
+ - Centralized regexps
+ - ncurses.t becomes script/do_ncurses.pl
+ - Get a beautiful array of hash from parse-tree value
+ - Revert "Reduce the number of callbacks to userspace"
+   
+   This reverts commit 7b6bf05d4862046c1768986e1f5ddb0a54d83011.
+ - Reduce the number of callbacks to userspace
+ - Again a fix to README.pod and META.json for dzil release
+
+0.004 2013-08-08T17:19:27
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - v0.004
+   
+    [Jean-Damien Durand <jeandamiendurand@free.fr>]
+    - Enabled CheckChangesHasContent and CheckExtraTests
  - Enabled CheckChangesHasContent and CheckExtraTests
 
 0.003 2013-08-08T16:59:04
