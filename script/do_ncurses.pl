@@ -1,16 +1,24 @@
-#!perl -T
+#!env perl
 use strict;
-use warnings FATAL => 'all';
-use Test::More tests => 1;
+use diagnostics;
+use Storable qw/store_fd/;
+use POSIX qw/EXIT_SUCCESS/;
 
 BEGIN {
-    push(@INC, 'inc');
-    use_ok( 'MarpaX::Database::Terminfo' ) || print "Bail out!\n";
+    use File::Spec;
+    unshift(@INC, 'lib');
 }
-
+use MarpaX::Database::Terminfo;
 my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
-$terminfo->parse(\$buffer)->value();
+print STDERR "Generating ncurses terminfo perl-ready database - be patient\n";
+my $value = $terminfo->parse(\$buffer)->value();
+my $outfile = File::Spec->catfile('share', 'ncurses-terminfo.storable');
+open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
+print STDERR "Writing ncurses database with Storable into $outfile\n";
+store_fd $value, \*OUTFILE;
+close(OUTFILE) || warn "Cannot close $outfile, $!\n";
+exit(EXIT_SUCCESS);
 
 __DATA__
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
