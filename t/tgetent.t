@@ -6,7 +6,7 @@ use File::Spec;
 
 BEGIN {
     push(@INC, 'inc');
-    use_ok( 'MarpaX::Database::Terminfo::Interface' ) || print "Bail out!\n";
+    use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:all/ ) || print "Bail out!\n";
+    $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
 }
-my $dumb = MarpaX::Database::Terminfo::Interface->new({bin => File::Spec->catfile('share', 'ncurses-terminfo.storable')})->tgetent('dumb');
-ok(defined($dumb), "tgetent('dumb')");
+is(tgetent('dumb'), 1, "tgetent('dumb')");
