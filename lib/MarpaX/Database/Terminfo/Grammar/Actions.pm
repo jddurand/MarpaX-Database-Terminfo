@@ -106,7 +106,10 @@ sub alias {
 
 sub boolean {
     my ($self, $boolean) = @_;
-    return $self->_pushFeature(0, $boolean, undef);
+    #
+    # If boolean ends with '@' then it is explicitely false
+    #
+    return $self->_pushFeature(0, $boolean, substr($boolean, -1, 1) eq '@' ? 0 : 1);
 }
 
 =head2 numeric($self, $numeric)
