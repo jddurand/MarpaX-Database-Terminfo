@@ -53,3 +53,5 @@ L<GNU Ncurses|http://www.gnu.org/software/ncurses/>
 =cut
 
 1;
+
+__DATA__
