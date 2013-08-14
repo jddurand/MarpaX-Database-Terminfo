@@ -60,11 +60,11 @@ Instance a singleton object. Any implementation lie tgetent(), tgetflag(), etc..
 
 =item file or $ENV{MARPAX_DATABASE_TERMINFO_FILE}
 
-a file path to the terminfo database. This module will then parse it using Marpa. If setted to any true value, this setting has precedence over the txt key/value.
+a file path to the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the txt key/value.
 
 =item txt or $ENV{MARPAX_DATABASE_TERMINFO_TXT}
 
-a text version of the terminfo database. This module will then parse it using Marpa. If setted to any true value, this setting has precedence over the bin key/value.
+a text version of the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the bin key/value.
 
 =item bin or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
 
@@ -72,11 +72,11 @@ a path to a binary version of the terminfo database, created using Storable modu
 
 =item caps or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
 
-a path to a text version of the terminfo<->termcap translation. This module is distributed with GNU ncurses translation files, namely: ncurses-Caps (default), ncurses-Caps.aix4 (default on AIX), ncurses-Caps.hpux11 (default on HP/UX), ncurses-Caps.keys, ncurses-Caps.osf1r5 (default on OSF1) and ncurses-Caps.uwin. if you run on AIXsuch a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
+a path to a text version of the terminfo<->termcap translation. This module is distributed with GNU ncurses translation files, namely: ncurses-Caps (default), ncurses-Caps.aix4 (default on AIX), ncurses-Caps.hpux11 (default on HP/UX), ncurses-Caps.keys, ncurses-Caps.osf1r5 (default on OSF1) and ncurses-Caps.uwin.
 
 =back
 
-Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'dumb'. The database used is not a compiled database as with GNU ncurses an al., therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
+Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'dumb'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
 
 =cut
 
@@ -100,14 +100,15 @@ sub _new_instance {
 
     my $db = undef;
     if ($file) {
+	my $fh;
 	if ($log->is_debug) {
 	    $log->debugf('Loading %s', $file);
 	}
-	if (! open(FILE, '<', $file)) {
+	if (! open($fh, '<', $file)) {
 	    carp "Cannot open $file; $!";
 	} else {
-	    my $content = do {local $/; <FILE>;};
-	    close(FILE) || carp "Cannot close $file, $!";
+	    my $content = do {local $/; <$fh>;};
+	    close($fh) || carp "Cannot close $file, $!";
 	    if ($log->is_debug) {
 		$log->debugf('Parsing %s', $file);
 	    }
@@ -119,60 +120,63 @@ sub _new_instance {
 	}
 	$db = eval {MarpaX::Database::Terminfo->new()->parse(\$txt)->value()};
     } else {
+	my $fh;
 	if ($log->is_debug) {
 	    $log->debugf('Loading %s', $bin);
 	}
-	if (! open(BIN, '<', $bin)) {
+	if (! open($fh, '<', $bin)) {
 	    carp "Cannot open $bin; $!";
 	} else {
-	    $db = eval {fd_retrieve(\*BIN)};
-	    close(BIN) || carp "Cannot close $bin, $!";
+	    $db = eval {fd_retrieve($fh)};
+	    close($fh) || carp "Cannot close $bin, $!";
 	}
     }
-
     my %t2other = ();
     my %c2other = ();
     my %capalias = ();
     my %infoalias = ();
-    if ($log->is_debug) {
-	$log->debugf('Loading %s', $caps);
-    }
-    if (! open(CAPS, '<', $caps)) {
-	carp "Cannot open $caps; $!";
-    } else {
-	#
-	# Get translations
-	#
-	my $line = 0;
-	while (defined($_ = <CAPS>)) {
-	    ++$line;
-	    if (/^\s*#/) {
-		next;
-	    }
-	    s/\s*$//;
-	    if (/^\s*capalias\b/) {
-		my ($capalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
-		$capalias{$alias} = {name => $name, set => $set, description => $description};
-	    } elsif (/^\s*infoalias\b/) {
-		my ($infoalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
-		$infoalias{$alias} = {name => $name, set => $set, description => $description};
-	    } else {
-		my ($variable, $feature, $type, $termcap, $keyname, $keyvalue, $translation, $description) = split(/\s+/, $_, 8);
-		if ($type eq 'bool') {
-		    $type = TERMINFO_BOOLEAN;
-		} elsif ($type eq 'num') {
-		    $type = TERMINFO_NUMERIC;
-		} elsif ($type eq 'str') {
-		    $type = TERMINFO_STRING;
-		} else {
-		    $log->warnf('%s(%d): wrong type \'%s\'', $caps, $line, $type); exit;
+    {
+	if ($log->is_debug) {
+	    $log->debugf('Loading %s', $caps);
+	}
+	my $fh;
+	if (! open($fh, '<', $caps)) {
+	    carp "Cannot open $caps; $!";
+	} else {
+	    #
+	    # Get translations
+	    #
+	    my $line = 0;
+	    while (defined($_ = <$fh>)) {
+		++$line;
+		if (/^\s*#/) {
 		    next;
 		}
-		$t2other{$feature} = {type => $type, termcap => $termcap, variable => $variable};
-		$c2other{$termcap} = {type => $type, feature => $feature, variable => $variable};
+		s/\s*$//;
+		if (/^\s*capalias\b/) {
+		    my ($capalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
+		    $capalias{$alias} = {name => $name, set => $set, description => $description};
+		} elsif (/^\s*infoalias\b/) {
+		    my ($infoalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
+		    $infoalias{$alias} = {name => $name, set => $set, description => $description};
+		} else {
+		    my ($variable, $feature, $type, $termcap, $keyname, $keyvalue, $translation, $description) = split(/\s+/, $_, 8);
+		    if ($type eq 'bool') {
+			$type = TERMINFO_BOOLEAN;
+		    } elsif ($type eq 'num') {
+			$type = TERMINFO_NUMERIC;
+		    } elsif ($type eq 'str') {
+			$type = TERMINFO_STRING;
+		    } else {
+			$log->warnf('%s(%d): wrong type \'%s\'', $caps, $line, $type); exit;
+			next;
+		    }
+		    $t2other{$feature} = {type => $type, termcap => $termcap, variable => $variable};
+		    $c2other{$termcap} = {type => $type, feature => $feature, variable => $variable};
+		}
 	    }
+	    close($fh) || carp "Cannot close $caps, $!";
 	}
-	close(CAPS) || carp "Cannot close $caps, $!";
     }
 
     my $self = {
@@ -296,6 +300,8 @@ Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the termin
 sub _find {
     my ($self, $name) = @_;
 
+    my $rc = undef;
+
     my $terminfo_db = _terminfo_db();
     if (defined($terminfo_db)) {
 	foreach (@{$terminfo_db}) {
@@ -305,11 +311,12 @@ sub _find {
 		if ($log->is_debug) {
 		    $log->debugf('Found alias \'%s\' in terminfo with aliases %s longname \'%s\'', $name, $terminfo->{alias}, $terminfo->{longname});
 		}
-		return $terminfo;
+		$rc = $terminfo;
+		last;
 	    }
 	}
     }
-    return undef;
+    return $rc;
 }
 
 sub tgetent {
@@ -525,9 +532,9 @@ sub tgetstr {
     return _tget(0, TERMINFO_STRING, @_);
 }
 
-=head2 tgetstr($id, $areap)
+=head2 tputs($str, $affcnt, $putc)
 
-Gets the string entry for $id, or 0 if not available. If $areap is defined, the buffer it is pointing to is updated with the $id value. Only the first two characters of the id parameter are compared in lookups.
+Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $putc is a putchar-like routine to which the characters are passed, one at a time.
 
 =cut
 
