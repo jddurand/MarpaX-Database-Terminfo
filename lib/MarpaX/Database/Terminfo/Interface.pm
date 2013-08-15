@@ -13,7 +13,10 @@ use Scalar::Util qw/refaddr/;
 use Log::Any qw/$log/;
 our $HAVE_POSIX = eval 'use POSIX; 1;' || 0;
 
-our @EXPORT_FUNCTIONS  = qw/tgetent tgetflag tgetnum tgetstr tputs/;
+our @EXPORT_FUNCTIONS  = qw/tgetent
+                            tgetflag  tgetnum  tgetstr
+                            tigetflag tigetnum tigetstr
+                            tputs/;
 our @EXPORT_INTERNALS = qw/_terminfo_db _terminfo_current _terminfo_init/;
 
 our @EXPORT_OK = (@EXPORT_FUNCTIONS, @EXPORT_INTERNALS);
@@ -333,8 +336,8 @@ sub tgetent {
     #
     # Process cancellations and use=
     #
+    my %cancelled = ();
     {
-	my %cancelled = ();
 	my %featured = ();
 	my $i = 0;
 	while ($i <= $#{$found->{feature}}) {
@@ -384,6 +387,10 @@ sub tgetent {
 	    }
 	}
     }
+    #
+    # Remember cancelled things
+    #
+    $found->{cancelled} = \%cancelled;
     #
     # Drop needless cancellations
     #
@@ -644,29 +651,45 @@ sub _get_ospeed_and_baudrate {
 # space refers to termcap, feature (i.e. terminfo) or variable
 #
 sub _tget {
-    my ($self, $space, $default, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
+    my ($self, $space, $default, $default_if_cancelled, $default_if_wrong_type, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
 
     my $rc = $default;
+    my $found = 0;
 
     if (_terminfo_init()) {
-	my $found = 0;
-	foreach (@{$self->_terminfo_current->{$space}}) {
-	    my $name = $_->{name};
-	    if ($_->{type} == $type && $name eq $id) {
-		if ($log->is_debug) {
-		    $log->debugf('Found %s feature %s', $space, $_);
-		}
-		$rc = $_->{value};
-		$found = 1;
-		last;
+	if (defined($default_if_cancelled) && exists($self->_terminfo_current->{cancelled}->{$id})) {
+	    if ($log->is_debug) {
+		$log->debugf('Cancelled %s feature %s', $space, $id);
 	    }
-	}
-	if (! $found && $log->is_debug) {
-	    $log->debugf('No %s feature with name \'%s\'', $space, $id);
+	    $rc = $default_if_cancelled;
+	} else {
+	    $found = 0;
+	    foreach (@{$self->_terminfo_current->{$space}}) {
+		my $name = $_->{name};
+		if ($name eq $id) {
+		    if ($_->{type} == $type) {
+			if ($log->is_debug) {
+			    $log->debugf('Found %s feature %s', $space, $_);
+			}
+			$rc = $_->{value};
+			$found = 1;
+			last;
+		    } elsif (defined($default_if_wrong_type)) {
+			if ($log->is_debug) {
+			    $log->debugf('Found %s feature %s with type %d != %d', $space, $_, $_->{type}, $type);
+			}
+			$rc = $default_if_wrong_type;
+			last;
+		    }
+		}
+	    }
+	    if (! $found && $log->is_debug) {
+		$log->debugf('No %s feature with name \'%s\'', $space, $id);
+	    }
 	}
     }
 
-    if (defined($areap)) {
+    if ($found && defined($areap)) {
 	if (! defined(${$areap})) {
 	    ${$areap} = '';
 	}
@@ -680,32 +703,62 @@ sub _tget {
 
 =head2 tgetflag($id)
 
-Gets the boolean entry for termcap entry $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
+Gets the boolean value for termcap entry $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetflag {
-    return _tget('termcap', 0, TERMINFO_BOOLEAN, @_);
+    return _tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, @_);
+}
+
+=head2 tigetflag($id)
+
+Gets the boolean value for terminfo entry $id. Returns the value -1 if $id is not a boolean capability, or 0 if it is canceled or absent from the terminal description.
+
+=cut
+
+sub tigetflag {
+    return _tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, @_);
 }
 
 =head2 tgetnum($id)
 
-Gets the numeric entry for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
+Gets the numeric value for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetnum {
-    return _tget('termcap', -1, TERMINFO_NUMERIC, @_);
+    return _tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, @_);
+}
+
+=head2 tigetnum($id)
+
+Gets the numeric value for terminfo entry $id. Returns the value -2 if $id is not a numeric capability, or -1 if it is canceled or absent from the terminal description.
+
+=cut
+
+sub tigetnum {
+    return _tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, @_);
 }
 
 =head2 tgetstr($id, $areap)
 
-Gets the string entry for termcap entry $id, or 0 if not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
+Gets the string value for termcap entry $id, or 0 if not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetstr {
-    return _tget('termcap', 0, TERMINFO_STRING, @_);
+    return _tget('termcap', 0, undef, undef, TERMINFO_STRING, @_);
+}
+
+=head2 tigetstr($id)
+
+Gets the string value for terminfo entry $id. returns the value undef if $id is not a string capability, or canceled or absent from the terminal description. Note that this differs from the standard, but in perl "-1", "0" do not rally differ from values -1 and 0.
+
+=cut
+
+sub tigetstr {
+    return _tget('terminfo', undef, undef, undef, TERMINFO_STRING, @_);
 }
 
 =head2 tputs($str, $affcnt, $putc)
@@ -780,8 +833,28 @@ sub tputs {
 # 			%gx %gy %m
 # 	resulting in x mod y, not the reverse.
 #
+sub _save_char {
+    my ($c) = (@_);
+
+    if ($c == 0) {
+	$c = 0200;
+    }
+    return $c;
+}
+
 sub _tparm {
     my ($self, $string, @param) = (__PACKAGE__->instance(), @_);
+
+    my $len = length($string);
+    my $i = 0;
+    my $rc = '';
+    while ($i < $len) {
+	my $c = substr($string, $i, 1);
+	if ($c ne '%') {
+	    $rc .= _save_char($c);
+	} else {
+	}
+    }
   
 }
 
