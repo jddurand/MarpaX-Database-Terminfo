@@ -1,7 +1,7 @@
 #!perl -T
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests => 5;
+use Test::More tests => 6;
 use File::Spec;
 
 BEGIN {
@@ -11,7 +11,8 @@ BEGIN {
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
 }
 tgetent('nsterm-16color');
-is(tigetstr('fsl'), '^G', "tigetstr('fsl') - string value");
-is(tigetstr('wsl'), undef, "tigetstr('zsl') - not a string capability");
-is(tigetstr('absentcap'), undef, "tigetstr('absentcap') - absent capability ");
-is(tigetstr('bw'), undef, "tigetflag('bw') - cancelled capability");
+is(ref(tigetstr('fsl')), 'SCALAR', "tigetstr('fsl') returns a reference to a SCALAR");
+is(${tigetstr('fsl')}, '^G', "tigetstr('fsl') - string value");
+is(tigetstr('wsl'), -1, "tigetstr('zsl') - not a string capability");
+is(tigetstr('absentcap'), 0, "tigetstr('absentcap') - absent capability ");
+is(tigetstr('bw'), 0, "tigetflag('bw') - cancelled capability");

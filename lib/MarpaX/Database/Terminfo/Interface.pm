@@ -671,7 +671,11 @@ sub _tget {
 			if ($log->is_debug) {
 			    $log->debugf('Found %s feature %s', $space, $_);
 			}
-			$rc = $_->{value};
+			if ($type == TERMINFO_STRING) {
+			    $rc = \$_->{value};
+			} else {
+			    $rc = $_->{value};
+			}
 			$found = 1;
 			last;
 		    } elsif (defined($default_if_wrong_type)) {
@@ -694,8 +698,9 @@ sub _tget {
 	    ${$areap} = '';
 	}
 	my $pos = pos(${$areap}) || 0;
-	substr(${$areap}, $pos, 0, $rc);
-	pos(${$areap}) = $pos + length($rc);
+	my $this = ref($rc) ? ${$rc} : $rc;
+	substr(${$areap}, $pos, 0, $this);
+	pos(${$areap}) = $pos + length($this);
     }
 
     return $rc;
@@ -743,7 +748,7 @@ sub tigetnum {
 
 =head2 tgetstr($id, $areap)
 
-Gets the string value for termcap entry $id, or 0 if not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
+Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
@@ -753,12 +758,12 @@ sub tgetstr {
 
 =head2 tigetstr($id)
 
-Gets the string value for terminfo entry $id. returns the value undef if $id is not a string capability, or canceled or absent from the terminal description. Note that this differs from the standard, but in perl "-1", "0" do not rally differ from values -1 and 0.
+Returns a reference to terminfo string entry for $id, or -1 if $id is not a string capabilitty, or 0 it is canceled or absent from terminal description.
 
 =cut
 
 sub tigetstr {
-    return _tget('terminfo', undef, undef, undef, TERMINFO_STRING, @_);
+    return _tget('terminfo', 0, 0, -1, TERMINFO_STRING, @_);
 }
 
 =head2 tputs($str, $affcnt, $putc)
