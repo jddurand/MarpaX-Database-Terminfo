@@ -11,8 +11,9 @@ use Exporter 'import';
 use Storable qw/dclone/;
 use Scalar::Util qw/refaddr/;
 use Log::Any qw/$log/;
+our $HAVE_POSIX = eval 'use POSIX; 1;' || 0;
 
-our @EXPORT_FUNCTIONS  = qw/tgetent tgetflag tgetnum tgetstr/;
+our @EXPORT_FUNCTIONS  = qw/tgetent tgetflag tgetnum tgetstr tputs/;
 our @EXPORT_INTERNALS = qw/_terminfo_db _terminfo_current _terminfo_init/;
 
 our @EXPORT_OK = (@EXPORT_FUNCTIONS, @EXPORT_INTERNALS);
@@ -76,7 +77,7 @@ a path to a text version of the terminfo<->termcap translation. This module is d
 
 =back
 
-Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'dumb'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
+Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
 
 =cut
 
@@ -286,14 +287,14 @@ Internal function. Initialize if needed and if possible the current terminfo. Re
 sub _terminfo_init {
     my ($self) = __PACKAGE__->instance();
     if (! defined($self->{_terminfo_current})) {
-	tgetent($ENV{TERM} || 'dumb');
+	tgetent($ENV{TERM} || 'unknown');
     }
     return defined($self->_terminfo_current);
 }
 
 =head2 tgetent($name)
 
-Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken.
+Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate is derived from ospeed.
 
 =cut
 
@@ -416,6 +417,9 @@ sub tgetent {
     #
     # Fill variables and termcap correspondances
     #
+    my $pad_char = 0;
+    my $cursor_up = 0;
+    my $backspace_if_not_bs = 0;
     {
 	my @termcap = ();
 	my @variable = ();
@@ -451,7 +455,6 @@ sub tgetent {
 		}
 		push(@termcap, {name => $termcap, type => $type, value => $feature->{value}});
 	    }
-	    $found->{termcap} = \@termcap;
 	    #
 	    # Convert to variable
 	    #
@@ -460,13 +463,162 @@ sub tgetent {
 		$log->debugf('[Loading %s] Pushing variable feature \'%s\'', $name, $variable);
 	    }
 	    push(@variable, {name => $variable, type => $type, value => $feature->{value}});
-	    $found->{variable} = \@variable;
+	    if ($type == TERMINFO_STRING) {
+		if ($variable eq 'pad_char') {
+		    $pad_char = $feature->{value};
+		    if ($log->is_debug) {
+			$log->debugf('[Loading %s] pad_char is \'%s\'', $name, $feature->{value});
+		    }
+		} elsif ($variable eq 'cursor_up') {
+		    $cursor_up = $feature->{value};
+		    if ($log->is_debug) {
+			$log->debugf('[Loading %s] cursor_up is \'%s\'', $name, $feature->{value});
+		    }
+		} elsif ($variable eq 'backspace_if_not_bs') {
+		    $backspace_if_not_bs = $feature->{value};
+		    if ($log->is_debug) {
+			$log->debugf('[Loading %s] backspace_if_not_bs is \'%s\'', $name, $feature->{value});
+		    }
+		}
+	    }
 	}
+
+	# The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively.
+	#
+	# PC is used in the tdelay_output function.
+	#
+	my $PC = {name => 'PC', type => TERMINFO_STRING, value => $pad_char};
+	if ($log->is_debug) {
+	    $log->debugf('[Loading %s] Initialized PC to \'%s\'', $name, $PC->{value});
+	}
+	push(@variable, $PC);
+	#
+	# UP is not used by ncurses.
+	#
+	my $UP = {name => 'UP', type => TERMINFO_STRING, value => $cursor_up};
+	if ($log->is_debug) {
+	    $log->debugf('[Loading %s] Initialized UP to \'%s\'', $name, $UP->{value});
+	}
+	push(@variable, $UP);
+	#
+	# BC is used in the tgoto emulation.
+	#
+	my $BC = {name => 'BC', type => TERMINFO_STRING, value => $backspace_if_not_bs};
+	if ($log->is_debug) {
+	    $log->debugf('[Loading %s] Initialized BC to \'%s\'', $name, $BC->{value});
+	}
+	push(@variable, $BC);
+	#
+	# The variable ospeed is set in a system-specific coding to reflect the terminal speed.
+	#
+	my ($baudrate, $ospeed) = _get_ospeed_and_baudrate();
+	my $OSPEED = {name => 'ospeed', type => TERMINFO_STRING, value => $ospeed};
+	if ($log->is_debug) {
+	    $log->debugf('[Loading %s] Initialized ospeed to \'%s\'', $name, $OSPEED->{value});
+	}
+	push(@variable, $OSPEED);
+	my $BAUDRATE = {name => 'baudrate', type => TERMINFO_STRING, value => $baudrate};
+	if ($log->is_debug) {
+	    $log->debugf('[Loading %s] Initialized baudrate to \'%s\'', $name, $BAUDRATE->{value});
+	}
+	push(@variable, $BAUDRATE);
+
+	$found->{termcap} = \@termcap;
+	$found->{variable} = \@variable;
     }
 
     $self->{_terminfo_current} = $found;
 
     return 1;
+}
+#
+# _get_ospeed_and_baudrate calculates baudrate and ospeed
+#
+# POSIX module does not contain all the constants. Here they are.
+#
+our %OSPEED_TO_BAUDRATE = (
+    0    => 0,
+    1    => 50,
+    2    => 75,
+    3    => 110,
+    4    => 134,
+    5    => 150,
+    6    => 200,
+    7    => 300,
+    8    => 600,
+    9    => 1200,
+    10   => 1800,
+    11   => 2400,
+    12   => 4800,
+    13   => 9600,
+    14   => 19200,
+    15   => 38400,
+    4097 => 57600,
+    4098 => 115200,
+    4099 => 230400,
+    4100 => 460800,
+    4101 => 500000,
+    4102 => 576000,
+    4103 => 921600,
+    4104 => 1000000,
+    4105 => 1152000,
+    4107 => 2000000,
+    4108 => 2500000,
+    4109 => 3000000,
+    4110 => 3500000,
+    4111 => 4000000,
+    );
+
+sub _get_ospeed_and_baudrate {
+    my ($self, $default, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
+
+    my $baudrate = 0;
+    my $ospeed = 0;
+
+    if (defined($ENV{TERMINFO_OSPEED})) {
+	$ospeed = $ENV{TERMINFO_OSPEED};
+    } else {
+	my $termios = undef;
+	if ($HAVE_POSIX) {
+	    $termios = eval { POSIX::Termios->new() };
+	    if (! defined($termios)) {
+		if ($log->is_debug) {
+		    $log->debugf('POSIX::Termios->new() failure, %s', $@);
+		}
+	    } else {
+		eval {$termios->getattr};
+		if ($@) {
+		    if ($log->is_debug) {
+			$log->debugf('POSIX::Termios::getattr() failure, %s', $@);
+		    }
+		    $termios = undef;
+		}
+	    }
+	}
+	if (defined($termios)) {
+	    my $this = eval { $termios->getospeed() };
+	    if (! defined($ospeed)) {
+		if ($log->is_debug) {
+		    $log->debugf('getospeed() failure, %s', $@);
+		}
+	    } else {
+		$ospeed = $this;
+		if ($log->is_debug) {
+		    $log->debugf('getospeed() returned %d', $ospeed);
+		}
+	    }
+	}
+    }
+
+    if (! exists($OSPEED_TO_BAUDRATE{$ospeed})) {
+	if ($log->is_warn) {
+	    $log->warnf('ospeed %d is an unknown value. baudrate will be zero.', $ospeed);
+	}
+    }
+
+    $baudrate = $OSPEED_TO_BAUDRATE{$ospeed} || 0;
+
+    return ($baudrate, $ospeed);
 }
 
 #
