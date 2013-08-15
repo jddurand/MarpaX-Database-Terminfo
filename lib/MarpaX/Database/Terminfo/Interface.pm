@@ -11,7 +11,7 @@ use Exporter 'import';
 use Storable qw/dclone/;
 use Scalar::Util qw/refaddr/;
 use Log::Any qw/$log/;
-our $HAVE_POSIX = eval 'use POSIX; 1;' || 0;
+our $HAVE_POSIX = eval "use POSIX; 1;" || 0;
 
 our @EXPORT_FUNCTIONS  = qw/tgetent
                             tgetflag  tgetnum  tgetstr
@@ -777,10 +777,10 @@ sub tputs {
 #
 # 	char *
 # 	tparm(string, ...)
-# 
+#
 # 	Substitute the given parameters into the given string by the following
 # 	rules (taken from terminfo(5)):
-# 
+#
 # 	     Cursor addressing and other strings  requiring  parame-
 # 	ters in the terminal are described by a parameterized string
 # 	capability, with like escapes %x in  it.   For  example,  to
@@ -790,14 +790,14 @@ sub tputs {
 # 	screen visible to the user, not to any  unseen  memory.)  If
 # 	the terminal has memory relative cursor addressing, that can
 # 	be indicated by
-# 
+#
 # 	     The parameter mechanism uses  a  stack  and  special  %
 # 	codes  to manipulate it.  Typically a sequence will push one
 # 	of the parameters onto the stack and then print it  in  some
 # 	format.  Often more complex operations are necessary.
-# 
+#
 # 	     The % encodings have the following meanings:
-# 
+#
 # 	     %%        outputs `%'
 # 	     %c        print pop() like %c in printf()
 # 	     %s        print pop() like %s in printf()
@@ -805,7 +805,7 @@ sub tputs {
 #                      as in printf, flags are [-+#] and space
 #                      The ':' is used to avoid making %+ or %-
 #                      patterns (see below).
-# 
+#
 # 	     %p[1-9]   push ith parm
 # 	     %P[a-z]   set dynamic variable [a-z] to pop()
 # 	     %g[a-z]   get dynamic variable [a-z] and push it
@@ -814,7 +814,7 @@ sub tputs {
 # 	     %l        push strlen(pop)
 # 	     %'c'      push char constant c
 # 	     %{nn}     push integer constant nn
-# 
+#
 # 	     %+ %- %* %/ %m
 # 	               arithmetic (%m is mod): push(pop() op pop())
 # 	     %& %| %^  bit operations: push(pop() op pop())
@@ -822,12 +822,12 @@ sub tputs {
 # 	     %A %O     logical and & or operations for conditionals
 # 	     %! %~     unary operations push(op pop())
 # 	     %i        add 1 to first two parms (for ANSI terminals)
-# 
+#
 # 	     %? expr %t thenpart %e elsepart %;
 # 	               if-then-else, %e elsepart is optional.
 # 	               else-if's are possible ala Algol 68:
 # 	               %? c1 %t b1 %e c2 %t b2 %e c3 %t b3 %e c4 %t b4 %e b5 %;
-# 
+#
 # 	For those of the above operators which are binary and not commutative,
 # 	the stack works in the usual way, with
 # 			%gx %gy %m
@@ -837,7 +837,7 @@ sub _save_char {
     my ($c) = (@_);
 
     if ($c == 0) {
-	$c = 0200;
+	$c = oct("200");
     }
     return $c;
 }
@@ -855,11 +855,6 @@ sub _tparm {
 	} else {
 	}
     }
-  
-}
-
-sub tgoto {
-    
 }
 
 =head1 EXPORTS
