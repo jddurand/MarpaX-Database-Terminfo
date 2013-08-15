@@ -527,6 +527,11 @@ sub tgetent {
 	$found->{variable} = \@variable;
     }
 
+    #
+    # Alias terminfo space to feature
+    #
+    $found->{terminfo} = $found->{feature};
+
     $self->{_terminfo_current} = $found;
 
     return 1;
@@ -636,20 +641,20 @@ sub _get_ospeed_and_baudrate {
 }
 
 #
-# tget is a termcap-like thing: only termcap entries are checked, and they are per def two chars max in {termcap} hash
+# space refers to termcap, feature (i.e. terminfo) or variable
 #
 sub _tget {
-    my ($self, $default, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
+    my ($self, $space, $default, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
 
     my $rc = $default;
 
     if (_terminfo_init()) {
 	my $found = 0;
-	foreach (@{$self->_terminfo_current->{termcap}}) {
+	foreach (@{$self->_terminfo_current->{$space}}) {
 	    my $name = $_->{name};
 	    if ($_->{type} == $type && $name eq $id) {
 		if ($log->is_debug) {
-		    $log->debugf('Found termcap feature %s', $_);
+		    $log->debugf('Found %s feature %s', $space, $_);
 		}
 		$rc = $_->{value};
 		$found = 1;
@@ -657,7 +662,7 @@ sub _tget {
 	    }
 	}
 	if (! $found && $log->is_debug) {
-	    $log->debugf('No termcap feature with name \'%s\'', $id);
+	    $log->debugf('No %s feature with name \'%s\'', $space, $id);
 	}
     }
 
@@ -680,7 +685,7 @@ Gets the boolean entry for termcap entry $id, or 0 if not available. Only the fi
 =cut
 
 sub tgetflag {
-    return _tget(0, TERMINFO_BOOLEAN, @_);
+    return _tget('termcap', 0, TERMINFO_BOOLEAN, @_);
 }
 
 =head2 tgetnum($id)
@@ -690,7 +695,7 @@ Gets the numeric entry for termcap entry $id, or -1 if not available. Only the f
 =cut
 
 sub tgetnum {
-    return _tget(-1, TERMINFO_NUMERIC, @_);
+    return _tget('termcap', -1, TERMINFO_NUMERIC, @_);
 }
 
 =head2 tgetstr($id, $areap)
@@ -700,7 +705,7 @@ Gets the string entry for termcap entry $id, or 0 if not available. If $areap is
 =cut
 
 sub tgetstr {
-    return _tget(0, TERMINFO_STRING, @_);
+    return _tget('termcap', 0, TERMINFO_STRING, @_);
 }
 
 =head2 tputs($str, $affcnt, $putc)
@@ -711,6 +716,77 @@ Applies padding information to the string $str and outputs it. The $str must be 
 
 sub tputs {
     return _tget(0, TERMINFO_STRING, @_);
+}
+
+#
+# Copied from ncurses/lib_tparm.c:
+#
+#
+# 	char *
+# 	tparm(string, ...)
+# 
+# 	Substitute the given parameters into the given string by the following
+# 	rules (taken from terminfo(5)):
+# 
+# 	     Cursor addressing and other strings  requiring  parame-
+# 	ters in the terminal are described by a parameterized string
+# 	capability, with like escapes %x in  it.   For  example,  to
+# 	address  the  cursor, the cup capability is given, using two
+# 	parameters: the row and column to  address  to.   (Rows  and
+# 	columns  are  numbered  from  zero and refer to the physical
+# 	screen visible to the user, not to any  unseen  memory.)  If
+# 	the terminal has memory relative cursor addressing, that can
+# 	be indicated by
+# 
+# 	     The parameter mechanism uses  a  stack  and  special  %
+# 	codes  to manipulate it.  Typically a sequence will push one
+# 	of the parameters onto the stack and then print it  in  some
+# 	format.  Often more complex operations are necessary.
+# 
+# 	     The % encodings have the following meanings:
+# 
+# 	     %%        outputs `%'
+# 	     %c        print pop() like %c in printf()
+# 	     %s        print pop() like %s in printf()
+#            %[[:]flags][width[.precision]][doxXs]
+#                      as in printf, flags are [-+#] and space
+#                      The ':' is used to avoid making %+ or %-
+#                      patterns (see below).
+# 
+# 	     %p[1-9]   push ith parm
+# 	     %P[a-z]   set dynamic variable [a-z] to pop()
+# 	     %g[a-z]   get dynamic variable [a-z] and push it
+# 	     %P[A-Z]   set static variable [A-Z] to pop()
+# 	     %g[A-Z]   get static variable [A-Z] and push it
+# 	     %l        push strlen(pop)
+# 	     %'c'      push char constant c
+# 	     %{nn}     push integer constant nn
+# 
+# 	     %+ %- %* %/ %m
+# 	               arithmetic (%m is mod): push(pop() op pop())
+# 	     %& %| %^  bit operations: push(pop() op pop())
+# 	     %= %> %<  logical operations: push(pop() op pop())
+# 	     %A %O     logical and & or operations for conditionals
+# 	     %! %~     unary operations push(op pop())
+# 	     %i        add 1 to first two parms (for ANSI terminals)
+# 
+# 	     %? expr %t thenpart %e elsepart %;
+# 	               if-then-else, %e elsepart is optional.
+# 	               else-if's are possible ala Algol 68:
+# 	               %? c1 %t b1 %e c2 %t b2 %e c3 %t b3 %e c4 %t b4 %e b5 %;
+# 
+# 	For those of the above operators which are binary and not commutative,
+# 	the stack works in the usual way, with
+# 			%gx %gy %m
+# 	resulting in x mod y, not the reverse.
+#
+sub _tparm {
+    my ($self, $string, @param) = (__PACKAGE__->instance(), @_);
+  
+}
+
+sub tgoto {
+    
 }
 
 =head1 EXPORTS
