@@ -294,7 +294,7 @@ sub _terminfo_init {
 
 =head2 tgetent($name)
 
-Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate is derived from ospeed.
+Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{TERMINFO_BAUDRATE} (unchecked, i.e. at your own risk) or is derived from ospeed, or 0.
 
 =cut
 
@@ -616,7 +616,7 @@ sub _get_ospeed_and_baudrate {
 	}
     }
 
-    $baudrate = $OSPEED_TO_BAUDRATE{$ospeed} || 0;
+    $baudrate = $ENV{TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
 
     return ($baudrate, $ospeed);
 }
