@@ -292,9 +292,9 @@ sub _terminfo_init {
     return defined($self->_terminfo_current);
 }
 
-=head2 tgetent($name)
+=head2 tgetent($name[, $fh])
 
-Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{TERMINFO_BAUDRATE} (unchecked, i.e. at your own risk) or is derived from ospeed, or 0.
+Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{TERMINFO_BAUDRATE} (unchecked, i.e. at your own risk) or is derived from ospeed, or 0. $fh is an optional opened filehandle, used to guess about baudrate and ospeed. Defaults to fileno(\*STDIN) or 0.
 
 =cut
 
@@ -321,7 +321,7 @@ sub _find {
 }
 
 sub tgetent {
-    my ($self, $name) = (__PACKAGE__->instance(), @_);
+    my ($self, $name, $fh) = (__PACKAGE__->instance(), @_);
 
     if (! defined(_terminfo_db())) {
 	return -1;
@@ -511,7 +511,7 @@ sub tgetent {
 	#
 	# The variable ospeed is set in a system-specific coding to reflect the terminal speed.
 	#
-	my ($baudrate, $ospeed) = _get_ospeed_and_baudrate();
+	my ($baudrate, $ospeed) = _get_ospeed_and_baudrate($fh);
 	my $OSPEED = {name => 'ospeed', type => TERMINFO_STRING, value => $ospeed};
 	if ($log->is_debug) {
 	    $log->debugf('[Loading %s] Initialized ospeed to \'%s\'', $name, $OSPEED->{value});
@@ -570,7 +570,7 @@ our %OSPEED_TO_BAUDRATE = (
     );
 
 sub _get_ospeed_and_baudrate {
-    my ($self, $default, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
+    my ($self, $fh) = (__PACKAGE__->instance(), @_);
 
     my $baudrate = 0;
     my $ospeed = 0;
@@ -586,10 +586,24 @@ sub _get_ospeed_and_baudrate {
 		    $log->debugf('POSIX::Termios->new() failure, %s', $@);
 		}
 	    } else {
-		eval {$termios->getattr};
+		my $fileno = fileno(\*STDIN) || 0;
+		if (defined($fh)) {
+		    my $reffh = ref($fh);
+		    if ($reffh ne 'GLOB') {
+			if ($log->is_warn) {
+			    $log->warnf('filehandle should be a reference to GLOB instead of %s', $reffh || '<nothing>');
+			}
+		    } else {
+			$fileno = fileno($fh);
+		    }
+		}
+		if ($log->is_debug) {
+		    $log->debugf('Trying to get attributes on fileno %d', $fileno);
+		}
+		eval {$termios->getattr($fileno)};
 		if ($@) {
 		    if ($log->is_debug) {
-			$log->debugf('POSIX::Termios::getattr() failure, %s', $@);
+			$log->debugf('POSIX::Termios::getattr(%d) failure, %s', $fileno, $@);
 		    }
 		    $termios = undef;
 		}
