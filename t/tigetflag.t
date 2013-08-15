@@ -10,8 +10,9 @@ BEGIN {
     $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
 }
-tgetent('nsterm-16color');
-is(tigetflag('am'), 1, "tigetflag('am') - boolean value");
-is(tigetflag('cols'), -1, "tigetflag('cols') - not a boolean capability");
-is(tigetflag('absentcap'), 0, "tigetflag('absentcap') - absent capability ");
-is(tigetflag('bw'), 0, "tigetflag('bw') - cancelled capability");
+my $t = MarpaX::Database::Terminfo::Interface->new();
+$t->tgetent('nsterm-16color');
+is($t->tigetflag('am'), 1, "\$t->tigetflag('am') - boolean value");
+is($t->tigetflag('cols'), -1, "\$t->tigetflag('cols') - not a boolean capability");
+is($t->tigetflag('absentcap'), 0, "\$t->tigetflag('absentcap') - absent capability ");
+is($t->tigetflag('bw'), 0, "\$t->tigetflag('bw') - cancelled capability");

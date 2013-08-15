@@ -1,7 +1,7 @@
 #!perl -T
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 BEGIN {
     push(@INC, 'inc');
@@ -10,7 +10,7 @@ BEGIN {
 
 my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
-$terminfo->parse(\$buffer)->value();
+ok(defined($terminfo->parse(\$buffer)->value()), "Marpa parsing of ansi/pc-term compatible with color");
 
 __DATA__
 ansi|ansi/pc-term compatible with color,

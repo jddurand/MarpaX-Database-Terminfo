@@ -14,11 +14,12 @@ BEGIN {
 #
 # Test all terminals in the ncurses database
 #
-_terminfo_init();
-foreach (@{_terminfo_db()}) {
+my $t = MarpaX::Database::Terminfo::Interface->new();
+$t->_terminfo_init;
+foreach (@{$t->_terminfo_db}) {
     foreach (@{$_->{alias}}) {
 	++$number_of_tests_run;
-	is(tgetent($_), 1, "tgetent('$_')");
+	is($t->tgetent($_), 1, "\$t->tgetent('$_')");
     }
 }
 done_testing( $number_of_tests_run );

@@ -10,9 +10,10 @@ BEGIN {
     $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
 }
-tgetent('nsterm-16color');
-is(ref(tigetstr('fsl')), 'SCALAR', "tigetstr('fsl') returns a reference to a SCALAR");
-is(${tigetstr('fsl')}, '^G', "tigetstr('fsl') - string value");
-is(tigetstr('wsl'), -1, "tigetstr('zsl') - not a string capability");
-is(tigetstr('absentcap'), 0, "tigetstr('absentcap') - absent capability ");
-is(tigetstr('bw'), 0, "tigetflag('bw') - cancelled capability");
+my $t = MarpaX::Database::Terminfo::Interface->new();
+$t->tgetent('nsterm-16color');
+is(ref($t->tigetstr('fsl')), 'SCALAR', "\$t->tigetstr('fsl') returns a reference to a SCALAR");
+is(${$t->tigetstr('fsl')}, '^G', "\$t->tigetstr('fsl') - string value");
+is($t->tigetstr('wsl'), -1, "\$t->tigetstr('zsl') - not a string capability");
+is($t->tigetstr('absentcap'), 0, "\$t->tigetstr('absentcap') - absent capability ");
+is($t->tigetstr('bw'), 0, "\$t->tigetflag('bw') - cancelled capability");

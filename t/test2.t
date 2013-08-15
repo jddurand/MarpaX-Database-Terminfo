@@ -1,7 +1,7 @@
 #!perl -T
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 BEGIN {
     push(@INC, 'inc');
@@ -10,7 +10,7 @@ BEGIN {
 
 my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
-$terminfo->parse(\$buffer)->value();
+ok($terminfo->parse(\$buffer)->value(), "Marpa parsing of AT&T610;80column;98key keyboard");
 
 __DATA__
 610|610bct|ATT610|att610|AT&T610;80column;98key keyboard,

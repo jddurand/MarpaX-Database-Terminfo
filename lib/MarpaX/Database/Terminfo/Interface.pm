@@ -6,7 +6,6 @@ use MarpaX::Database::Terminfo::Constants qw/:all/;
 use File::ShareDir qw/:ALL/;
 use Carp qw/carp croak/;
 use Storable qw/fd_retrieve/;
-use base 'Class::Singleton';
 use Exporter 'import';
 use Storable qw/dclone/;
 use Scalar::Util qw/refaddr/;
@@ -84,7 +83,7 @@ Default terminal setup is done using the $ENV{TERM} environment variable, if it 
 
 =cut
 
-sub _new_instance {
+sub new {
     my ($class, $opts) = @_;
 
     $opts //= {};
@@ -197,84 +196,87 @@ sub _new_instance {
     return $self;
 }
 
-=head2 _terminfo_db()
+=head2 _terminfo_db($self)
 
 Internal function. Returns the raw database, in the form of an array of hashes.
 
 =cut
 
 sub _terminfo_db {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_terminfo_db})) {
 	$log->warnf('Undefined database');
     }
     return $self->{_terminfo_db};
 }
 
-=head2 _terminfo_current()
+=head2 _terminfo_current($self)
 
 Internal function. Returns the current terminfo entry.
 
 =cut
 
 sub _terminfo_current {
-    my ($self) = __PACKAGE__->instance();
+    my $self = shift;
+    if (@_) {
+	$self->{_terminfo_current} = shift;
+    }
     if ($log->is_warn && ! defined($self->{_terminfo_current})) {
 	$log->warnf('Undefined current terminfo entry');
     }
     return $self->{_terminfo_current};
 }
 
-=head2 _t2other()
+=head2 _t2other($self)
 
 Internal function. Returns the terminfo->termcap translation hash.
 
 =cut
 
 sub _t2other {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_t2other})) {
 	$log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_t2other};
 }
 
-=head2 _c2other()
+=head2 _c2other($self)
 
 Internal function. Returns the terminfo->termcap translation hash.
 
 =cut
 
 sub _c2other {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_c2other})) {
 	$log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_c2other};
 }
 
-=head2 _capalias()
+=head2 _capalias($self)
 
 Internal function. Returns the termcap aliases.
 
 =cut
 
 sub _capalias {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_capalias})) {
 	$log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_capalias};
 }
 
-=head2 _infoalias()
+=head2 _infoalias($self)
 
 Internal function. Returns the termcap aliases.
 
 =cut
 
 sub _infoalias {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_infoalias})) {
 	$log->warnf('Undefined terminfo->termcap translation hash');
     }
@@ -288,9 +290,9 @@ Internal function. Initialize if needed and if possible the current terminfo. Re
 =cut
 
 sub _terminfo_init {
-    my ($self) = __PACKAGE__->instance();
+    my ($self) = (@_);
     if (! defined($self->{_terminfo_current})) {
-	tgetent($ENV{TERM} || 'unknown');
+	$self->tgetent($ENV{TERM} || 'unknown');
     }
     return defined($self->_terminfo_current);
 }
@@ -306,7 +308,7 @@ sub _find {
 
     my $rc = undef;
 
-    my $terminfo_db = _terminfo_db();
+    my $terminfo_db = $self->_terminfo_db;
     if (defined($terminfo_db)) {
 	foreach (@{$terminfo_db}) {
 	    my $terminfo = $_;
@@ -324,9 +326,9 @@ sub _find {
 }
 
 sub tgetent {
-    my ($self, $name, $fh) = (__PACKAGE__->instance(), @_);
+    my ($self, $name, $fh) = (@_);
 
-    if (! defined(_terminfo_db())) {
+    if (! defined($self->_terminfo_db)) {
 	return -1;
     }
     my $found = $self->_find($name);
@@ -518,7 +520,7 @@ sub tgetent {
 	#
 	# The variable ospeed is set in a system-specific coding to reflect the terminal speed.
 	#
-	my ($baudrate, $ospeed) = _get_ospeed_and_baudrate($fh);
+	my ($baudrate, $ospeed) = $self->_get_ospeed_and_baudrate($fh);
 	my $OSPEED = {name => 'ospeed', type => TERMINFO_STRING, value => $ospeed};
 	if ($log->is_debug) {
 	    $log->debugf('[Loading %s] Initialized ospeed to \'%s\'', $name, $OSPEED->{value});
@@ -539,7 +541,7 @@ sub tgetent {
     #
     $found->{terminfo} = $found->{feature};
 
-    $self->{_terminfo_current} = $found;
+    $self->_terminfo_current($found);
 
     return 1;
 }
@@ -582,7 +584,7 @@ our %OSPEED_TO_BAUDRATE = (
     );
 
 sub _get_ospeed_and_baudrate {
-    my ($self, $fh) = (__PACKAGE__->instance(), @_);
+    my ($self, $fh) = (@_);
 
     my $baudrate = 0;
     my $ospeed = 0;
@@ -651,12 +653,12 @@ sub _get_ospeed_and_baudrate {
 # space refers to termcap, feature (i.e. terminfo) or variable
 #
 sub _tget {
-    my ($self, $space, $default, $default_if_cancelled, $default_if_wrong_type, $type, $id, $areap) = (__PACKAGE__->instance(), @_);
+    my ($self, $space, $default, $default_if_cancelled, $default_if_wrong_type, $type, $id, $areap) = (@_);
 
     my $rc = $default;
     my $found = 0;
 
-    if (_terminfo_init()) {
+    if ($self->_terminfo_init()) {
 	if (defined($default_if_cancelled) && exists($self->_terminfo_current->{cancelled}->{$id})) {
 	    if ($log->is_debug) {
 		$log->debugf('Cancelled %s feature %s', $space, $id);
@@ -713,7 +715,8 @@ Gets the boolean value for termcap entry $id, or 0 if not available. Only the fi
 =cut
 
 sub tgetflag {
-    return _tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, @_);
+    my $self = shift;
+    return $self->_tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, @_);
 }
 
 =head2 tigetflag($id)
@@ -723,7 +726,8 @@ Gets the boolean value for terminfo entry $id. Returns the value -1 if $id is no
 =cut
 
 sub tigetflag {
-    return _tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, @_);
+    my $self = shift;
+    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, @_);
 }
 
 =head2 tgetnum($id)
@@ -733,7 +737,8 @@ Gets the numeric value for termcap entry $id, or -1 if not available. Only the f
 =cut
 
 sub tgetnum {
-    return _tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, @_);
+    my $self = shift;
+    return $self->_tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, @_);
 }
 
 =head2 tigetnum($id)
@@ -743,7 +748,8 @@ Gets the numeric value for terminfo entry $id. Returns the value -2 if $id is no
 =cut
 
 sub tigetnum {
-    return _tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, @_);
+    my $self = shift;
+    return $self->_tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, @_);
 }
 
 =head2 tgetstr($id, $areap)
@@ -753,7 +759,8 @@ Returns a reference to termcap string entry for $id, or zero if it is not availa
 =cut
 
 sub tgetstr {
-    return _tget('termcap', 0, undef, undef, TERMINFO_STRING, @_);
+    my $self = shift;
+    return $self->_tget('termcap', 0, undef, undef, TERMINFO_STRING, @_);
 }
 
 =head2 tigetstr($id)
@@ -763,7 +770,8 @@ Returns a reference to terminfo string entry for $id, or -1 if $id is not a stri
 =cut
 
 sub tigetstr {
-    return _tget('terminfo', 0, 0, -1, TERMINFO_STRING, @_);
+    my $self = shift;
+    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_STRING, @_);
 }
 
 =head2 tputs($str, $affcnt, $putc)
@@ -773,7 +781,8 @@ Applies padding information to the string $str and outputs it. The $str must be 
 =cut
 
 sub tputs {
-    return _tget(0, TERMINFO_STRING, @_);
+    my $self = shift;
+    return $self->_tget(0, TERMINFO_STRING, @_);
 }
 
 #
@@ -839,7 +848,7 @@ sub tputs {
 # 	resulting in x mod y, not the reverse.
 #
 sub _save_char {
-    my ($c) = (@_);
+    my ($self, $c) = (@_);
 
     if ($c == 0) {
 	$c = oct("200");
@@ -847,8 +856,8 @@ sub _save_char {
     return $c;
 }
 
-sub _tparm {
-    my ($self, $string, @param) = (__PACKAGE__->instance(), @_);
+sub _tparam_internal {
+    my ($self, $string, @param) = (@_);
 
     my $len = length($string);
     my $i = 0;
