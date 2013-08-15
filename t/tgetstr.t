@@ -1,7 +1,7 @@
 #!perl -T
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests => 3;
+use Test::More tests => 10;
 use File::Spec;
 
 BEGIN {
@@ -13,4 +13,15 @@ BEGIN {
 tgetent('dumb');
 my $area;
 is(tgetstr('bl', \$area), '^G', "tgetstr('bl')");
-is($area, '^G', "tgetstr('bl', \\\$area)");
+is($area, '^G', "tgetstr('bl', \\\$area) where \\\$area is undef");
+is(pos($area), 2, "pos(\\\$area) == 2");
+$area = 'x';
+pos($area) = length($area);
+is(tgetstr('bl', \$area), '^G', "tgetstr('bl')");
+is($area, 'x^G', "tgetstr('bl', \\\$area) where \\\$area is \"x\" and its pos() is 1");
+is(pos($area), 3, "pos(\\\$area) == 3");
+$area = 'x';
+pos($area) = undef;
+is(tgetstr('bl', \$area), '^G', "tgetstr('bl')");
+is($area, '^Gx', "tgetstr('bl', \\\$area) where \\\$area is \"x\" and its pos() is undef");
+is(pos($area), 2, "pos(\\\$area) == 2");

@@ -648,7 +648,12 @@ sub _tget {
     }
 
     if (defined($areap)) {
-	${$areap} = $rc;
+	if (! defined(${$areap})) {
+	    ${$areap} = '';
+	}
+	my $pos = pos(${$areap}) || 0;
+	substr(${$areap}, $pos, 0, $rc);
+	pos(${$areap}) = $pos + length($rc);
     }
 
     return $rc;
@@ -656,7 +661,7 @@ sub _tget {
 
 =head2 tgetflag($id)
 
-Gets the boolean entry for $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
+Gets the boolean entry for termcap entry $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
@@ -666,7 +671,7 @@ sub tgetflag {
 
 =head2 tgetnum($id)
 
-Gets the numeric entry for $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
+Gets the numeric entry for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
@@ -676,7 +681,7 @@ sub tgetnum {
 
 =head2 tgetstr($id, $areap)
 
-Gets the string entry for $id, or 0 if not available. If $areap is defined, the buffer it is pointing to is updated with the $id value. Only the first two characters of the id parameter are compared in lookups.
+Gets the string entry for termcap entry $id, or 0 if not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
