@@ -6,23 +6,10 @@ use MarpaX::Database::Terminfo::Constants qw/:all/;
 use File::ShareDir qw/:ALL/;
 use Carp qw/carp croak/;
 use Storable qw/fd_retrieve/;
-use Exporter 'import';
 use Storable qw/dclone/;
 use Scalar::Util qw/refaddr/;
 use Log::Any qw/$log/;
 our $HAVE_POSIX = eval "use POSIX; 1;" || 0;
-
-our @EXPORT_FUNCTIONS  = qw/tgetent
-                            tgetflag  tgetnum  tgetstr
-                            tigetflag tigetnum tigetstr
-                            tputs tgoto
-                            tparm/;
-our @EXPORT_INTERNALS = qw/_terminfo_db _terminfo_current _terminfo_init/;
-
-our @EXPORT_OK = (@EXPORT_FUNCTIONS, @EXPORT_INTERNALS);
-our %EXPORT_TAGS = ('all'       => \@EXPORT_OK,
-		    'functions' => \@EXPORT_FUNCTIONS,
-		    'internal'  => \@EXPORT_INTERNALS);
 
 # ABSTRACT: Terminfo interface
 
@@ -58,23 +45,23 @@ This modules implements a terminfo X/open-compliant interface.
 
 =head2 new($class, $opts)
 
-Instance a singleton object. Any implementation lie tgetent(), tgetflag(), etc... is using this singleton. An optional $opt hash, with corresponding environment variables, can control how the object is created:
+Instance an object. An optional $opt is a reference to a hash:
 
 =over
 
-=item file or $ENV{MARPAX_DATABASE_TERMINFO_FILE}
+=item $opts->{file} or $ENV{MARPAX_DATABASE_TERMINFO_FILE}
 
 a file path to the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the txt key/value.
 
-=item txt or $ENV{MARPAX_DATABASE_TERMINFO_TXT}
+=item $opts->{txt} or $ENV{MARPAX_DATABASE_TERMINFO_TXT}
 
 a text version of the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the bin key/value.
 
-=item bin or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
+=item $opts->{bin} or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
 
 a path to a binary version of the terminfo database, created using Storable module. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
 
-=item caps or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
+=item $opts->{caps} or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
 
 a path to a text version of the terminfo<->termcap translation. This module is distributed with GNU ncurses translation files, namely: ncurses-Caps (default), ncurses-Caps.aix4 (default on AIX), ncurses-Caps.hpux11 (default on HP/UX), ncurses-Caps.keys, ncurses-Caps.osf1r5 (default on OSF1) and ncurses-Caps.uwin.
 
@@ -1354,26 +1341,6 @@ sub tgoto {
 
     return $self->_tparam_internal($string, @param);
 }
-
-=head1 EXPORTS
-
-This module is exporting on demand the following tags:
-
-=over
-
-=item functions
-
-The functions tgetent(), tgetflag(), tgetnum(), tgetstr().
-
-=item internal
-
-The internal functions _terminfo_db(), _terminfo_current(), _terminfo_init(), _t2other(), _c2other(), _capalias() and _infoalias().
-
-=item all
-
-All of the above.
-
-=back
 
 =head1 SEE ALSO
 
