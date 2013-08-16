@@ -15,7 +15,8 @@ our $HAVE_POSIX = eval "use POSIX; 1;" || 0;
 our @EXPORT_FUNCTIONS  = qw/tgetent
                             tgetflag  tgetnum  tgetstr
                             tigetflag tigetnum tigetstr
-                            tputs/;
+                            tputs tgoto
+                            tparm/;
 our @EXPORT_INTERNALS = qw/_terminfo_db _terminfo_current _terminfo_init/;
 
 our @EXPORT_OK = (@EXPORT_FUNCTIONS, @EXPORT_INTERNALS);
@@ -188,7 +189,9 @@ sub new {
 	_t2other => \%t2other,
 	_c2other => \%c2other,
 	_capalias => \%capalias,
-	_infoalias => \%infoalias
+	_infoalias => \%infoalias,
+	_static_vars => [],
+	_dynamic_vars => [],
     };
 
     bless($self, $class);
@@ -786,8 +789,7 @@ sub tputs {
 }
 
 #
-# Copied from ncurses/lib_tparm.c:
-#
+# The following is a perl version of ncurses/lib_tparm.c.
 #
 # 	char *
 # 	tparm(string, ...)
@@ -848,27 +850,509 @@ sub tputs {
 # 	resulting in x mod y, not the reverse.
 #
 sub _save_char {
-    my ($self, $c) = (@_);
+    my ($self, $bufp, $c) = (@_);
 
-    if ($c == 0) {
+    if (ord($c) == 0) {
 	$c = oct("200");
     }
-    return $c;
+
+    if ($log->is_debug) {
+	$log->debugf('_save_char($c=\'%s\')', $c);
+    }
+
+    ${$bufp} .= $c;
+}
+
+sub _save_number {
+    my ($self, $bufp, $fmt, $number, $len) = (@_);
+
+    my $this = sprintf($fmt, $number);
+
+    if ($log->is_debug) {
+	$log->debugf('_save_number($fmt=\"%s\", $number=%d, $len=%d) = %d', $fmt, $number, $len, $this);
+    }
+
+    ${$bufp} .= $this;
+}
+
+sub _save_text {
+    my ($self, $bufp, $fmt, $text, $len) = (@_);
+
+    my $this = sprintf($fmt, $text);
+
+    if ($log->is_debug) {
+	$log->debugf('_save_text($fmt=\"%s\", $text=\"%s\", $len=%d) = \"%s\"', $fmt, $text, $len, $this);
+    }
+
+    ${$bufp} .= $this;
+}
+
+sub _parse_format {
+    my ($self, $string, $index, $formatp, $lenp) = (@_);
+
+    ${$lenp} = 0;
+    my $done = 0;
+    my $allowminus = 0;
+    my $dot = 0;
+    my $err = 0;
+    my $my_width = 0;
+    my $my_prec = 0;
+    my $value = 0;
+
+    ${$formatp} .= '%';
+    my $indexmax = length($string) - 1;
+    while ($index <= $indexmax && ! $done) {
+	my $c = substr($string, $index, 1);
+	if ($c eq 'c' || $c eq 'd' || $c eq 'o' || $c eq 'x' || $c eq 'X' || $c eq 's') {
+	    ${$formatp} .= $c;
+	    $done = 1;
+	} elsif ($c eq '.') {
+	    ${$formatp} .= $c;
+	    $index++;
+	    if ($dot) {
+		$err = 1;
+	    } else {
+		$dot = 1;
+		$my_width = $value;
+	    }
+	    $value = 0;
+	} elsif ($c eq '#') {
+	    ${$formatp} .= $c;
+	    $index++;
+	} elsif ($c eq ' ') {
+	    ${$formatp} .= $c;
+	    $index++;
+	} elsif ($c eq ':') {
+	    $index++;
+	    $allowminus = 1;
+	} elsif ($c eq '-') {
+	    if ($allowminus) {
+		${$formatp} .= $c;
+		$index++;
+	    } else {
+		$done = 1;
+	    }
+	} else {
+	    if ($c =~ /\d/) {
+		$value = ($value * 10) + $c;
+		${$formatp} .= $c;
+		$index++;
+	    } else {
+		$done = 1;
+	    }
+	}
+    }
+    #
+    # If we found an error, ignore (and remove) the flags.
+    #
+    if ($err) {
+	$my_width = $my_prec = $value = 0;
+	${$formatp} = "%" . substr($string, $index, 1);
+    }
+    #
+    # Any value after '.' is the precision.  If we did not see '.', then
+    # the value is the width.
+    #
+    if ($dot) {
+	$my_prec = $value;
+    } else {
+	$my_width = $value;
+    }
+    #
+    # return maximum string length in prin
+    #
+    ${$lenp} = ($my_width > $my_prec) ? $my_width : $my_prec;
+
+    return $index;
+}
+
+sub _tparm_analyse {
+    my ($self, $string, $p_is_sp, $popcountp) = (@_);
+
+    my $lastpop = -1;
+    my $number = 0;
+
+    ${$popcountp} = 0;
+
+    my $index = 0;
+    my $indexmax = length($string) - 1;
+    while ($index <= $indexmax) {
+	my $c = substr($string, $index, 1);
+	if ($c eq '%') {
+	    $index++;
+	    my $fmt_buff = '';
+	    my $len;
+	    $index = $self->_parse_format($string, $index, \$fmt_buff, \$len);
+	    if ($index == $indexmax) {
+		last;
+	    }
+	    $c = substr($string, $index, 1);
+	    if ($c eq 'd' || $c eq 'o' || $c eq 'x' || $c eq 'X' || $c eq 'c') {
+		if ($lastpop <= 0) {
+		    $number++;
+		}
+		$lastpop = -1;
+	    } elsif ($c eq 'l' || $c eq 's') {
+		if ($lastpop > 0) {
+		    $p_is_sp->[$lastpop - 1] = 1;
+		}
+		++$number;
+	    } elsif ($c eq 'p') {
+		$index++;
+		my $i = substr($string, $index, 1);
+		if ($i >= 0) {
+		    $lastpop = $i;
+		    if ($lastpop > ${$popcountp}) {
+			${$popcountp} = $lastpop;
+		    }
+		}
+	    } elsif ($c eq 'P') {
+		++$number;
+		++$index;
+	    } elsif ($c eq 'g') {
+		++$index;
+	    } elsif ($c eq '\'') {
+		$index += 2;
+		$lastpop = -1;
+	    } elsif ($c eq '{') {
+		$index++;
+		while (substr($string, $index, 1) =~ /\p{Number}/) {
+		    $index++;
+		}
+	    } elsif ($c eq '+' || $c eq '-' || $c eq '*' || $c eq '/' ||
+		     $c eq 'm' || $c eq 'A' || $c eq 'O' ||
+		     $c eq '&' || $c eq '|' || $c eq '^' ||
+		     $c eq '=' || $c eq '<' || $c eq '>') {
+		$lastpop = -1;
+		$number += 2;
+	    } elsif ($c eq '!' || $c eq '~') {
+		$lastpop = -1;
+		++$number;
+	    } elsif ($c eq 'i') {
+		# will add 1 to first (usually two) parameters
+	    }
+	}
+	$index++;
+    }
+
+    return $number;
 }
 
 sub _tparam_internal {
     my ($self, $string, @param) = (@_);
 
-    my $len = length($string);
-    my $i = 0;
-    my $rc = '';
-    while ($i < $len) {
-	my $c = substr($string, $i, 1);
-	if ($c ne '%') {
-	    $rc .= _save_char($c);
-	} else {
+    my @p_is_s = (0) x scalar(@param);
+    my $popcount = 0;
+    my $level;
+
+    #
+    # Find the highest parameter-number referred to in the format string.
+    # Use this value to limit the number of arguments copied from the
+    # variable-length argument list.
+    #
+    my $number = $self->_tparm_analyse($string, \@p_is_s, \$popcount);
+    if ($log->is_debug) {
+	$log->debugf('\\@param  = %s', \@param);
+	$log->debugf('\\@p_is_s = %s', \@p_is_s);
+    }
+    my $num_args = $popcount > $number ? $popcount : $number;
+
+    for (my $i = 0; $i < $num_args; $i++) {
+	#
+	# A few caps (such as plab_norm) have string-valued parms.
+	# We'll have to assume that the caller knows the difference, since
+	# a char* and an int may not be the same size on the stack.  The
+	# normal prototype for this uses 9 long's, which is consistent with
+	# our va_arg() usage.
+	#
+	if ($p_is_s[$i]) {
+	    $p_is_s[$i] = $param[$i];
+	    $param[$i] = undef;
 	}
     }
+
+    #
+    # This is a termcap compatibility hack.  If there are no explicit pop
+    # operations in the string, load the stack in such a way that
+    # successive pops will grab successive parameters.  That will make
+    # the expansion of (for example) \E[%d;%dH work correctly in termcap
+    # style, which means tparam() will expand termcap strings OK.
+    #
+    my @stack = ();
+    if ($popcount == 0) {
+	$popcount = $number;
+	for (my $i = $number - 1; $i >= 0; $i--) {
+	    if ($p_is_s[$i]) {
+		$self->_spush(\@stack, $p_is_s[$i]);
+	    } else {
+		$self->_npush(\@stack, $param[$i]);
+	    }
+	}
+    }
+
+    my $index = 0;
+    my $indexmax = length($string) - 1;
+    my $outbuf = '';
+    while ($index <= $indexmax) {
+	my $c = substr($string, $index, 1);
+	if ($log->is_debug) {
+	    $log->debugf('_tparam_internal: $string index %d returns character \'%s\'', $index, $c);
+	}
+	if ($c ne '%') {
+	    $self->_save_char(\$outbuf, $c);
+	} else {
+	    $index++;
+	    my $fmt_buff = '';
+	    my $len;
+	    $index = $self->_parse_format($string, $index, \$fmt_buff, \$len);
+	    if ($log->is_debug) {
+		$log->debugf('_parse_format returns index %d, format %s, len %d', $index, $fmt_buff, $len);
+	    }
+	    if ($index == $indexmax) {
+		last;
+	    }
+	    $c = substr($string, $index, 1);
+	    if ($log->is_debug) {
+		$log->debugf('_tparam_internal: $string index %d returns character \'%s\'', $index, $c);
+	    }
+	    if ($c eq '%') {
+		$self->_save_char(\$outbuf, $c);
+	    } elsif ($c eq 'd' || $c eq 'o' || $c eq 'x' || $c eq 'X') {
+		$self->_save_number(\$outbuf, $fmt_buff, $self->_npop(\@stack), $len);
+	    } elsif ($c eq 'c') {
+		$self->_save_char(\$outbuf, $self->_npop(\@stack));
+	    } elsif ($c eq 'l') {
+		$self->_npush(\@stack, length($self->_spop(\@stack)));
+	    } elsif ($c eq 's') {
+		$self->_save_text(\$outbuf, $self->_spop(\@stack), $len);
+	    } elsif ($c eq 'p') {
+		$index++;
+		my $c = substr($string, $index, 1);
+		my $i = $c - 1;
+		if ($p_is_s[$i]) {
+		    $self->_spush(\@stack, $p_is_s[$i]);
+		} else {
+		    $self->_npush(\@stack, $param[$i]);
+		}
+	    } elsif ($c eq 'P') {
+		$index++;
+		my $c = substr($string, $index, 1);
+		if ($c =~ /\p{Uppercase_Letter}/) {
+		    my $i = ord($c) - ord('A');
+		    $self->{_static_vars}->[$i] = $self->_npop(\@stack);
+		} elsif ($c =~ /\p{Lowercase_Letter}/) {
+		    my $i = ord($c) - ord('a');
+		    $self->{_dynamic_vars}->[$i] = $self->_npop(\@stack);
+		}
+	    } elsif ($c eq 'g') {
+		$index++;
+		my $c = substr($string, $index, 1);
+		if ($c =~ /\p{Uppercase_Letter}/) {
+		    my $i = ord($c) - ord('A');
+		    $self->_npush(\@stack, $self->{_static_vars}->[$i]);
+		} elsif ($c =~ /\p{Lowercase_Letter}/) {
+		    my $i = ord($c) - ord('a');
+		    $self->_npush(\@stack, $self->{_dynamic_vars}->[$i]);
+		}
+	    } elsif ($c eq '\'') {
+		$index++;
+		my $c = substr($string, $index, 1);
+		$self->_npush(\@stack, $c);
+		$index++;
+	    } elsif ($c eq '{') {
+		$number = 0;
+		$index++;
+		while (($c = substr($string, $index, 1)) =~ /\d/) {
+		    if ($log->is_debug) {
+			$log->debugf('_tparam_internal[\'{\' case]: $string index %d returns character \'%s\'', $index, $c);
+		    }
+		    $number = ($number * 10) + $c;
+		    $index++;
+		}
+		$self->_npush(\@stack, $number);
+	    } elsif ($c eq '+') {
+		$self->_npush(\@stack, $self->_npop(\@stack) + $self->_npop(\@stack));
+	    } elsif ($c eq '-') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $x - $y);
+	    } elsif ($c eq '*') {
+		$self->_npush(\@stack, $self->_npop(\@stack) * $self->_npop(\@stack));
+	    } elsif ($c eq '/') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $y ? int($x / $y) : 0);
+	    } elsif ($c eq 'm') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $y ? int($x % $y) : 0);
+	    } elsif ($c eq 'A') {
+		$self->_npush(\@stack, $self->_npop(\@stack) && $self->_npop(\@stack));
+	    } elsif ($c eq 'O') {
+		$self->_npush(\@stack, $self->_npop(\@stack) || $self->_npop(\@stack));
+	    } elsif ($c eq '&') {
+		$self->_npush(\@stack, $self->_npop(\@stack) & $self->_npop(\@stack));
+	    } elsif ($c eq '|') {
+		$self->_npush(\@stack, $self->_npop(\@stack) | $self->_npop(\@stack));
+	    } elsif ($c eq '^') {
+		$self->_npush(\@stack, $self->_npop(\@stack) ^ $self->_npop(\@stack));
+	    } elsif ($c eq '=') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $x == $y);
+	    } elsif ($c eq '<') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $x < $y);
+	    } elsif ($c eq '>') {
+		my $y = $self->_npop(\@stack);
+		my $x = $self->_npop(\@stack);
+		$self->_npush(\@stack, $x > $y);
+	    } elsif ($c eq '!') {
+		$self->_npush(\@stack, ! $self->_npop(\@stack));
+	    } elsif ($c eq '~') {
+		$self->_npush(\@stack, ~ $self->_npop(\@stack));
+	    } elsif ($c eq 'i') {
+		if ($#p_is_s >= 0 && $p_is_s[0] == 0) {
+		    $param[0]++;
+		}
+		if ($#p_is_s >= 1 && $p_is_s[1] == 0) {
+		    $param[1]++;
+		}
+	    } elsif ($c eq '?') {
+	    } elsif ($c eq 't') {
+		my $x = $self->_npop(\@stack);
+		if (! $x) {
+		    # scan forward for %e or %; at level zero
+		    $index++;
+		    $level = 0;
+		    while ($index <= $indexmax) {
+			$c = substr($string, $index, 1);
+			if ($log->is_debug) {
+			    $log->debugf('_tparam_internal[\'t\' case]: $string index %d returns character \'%s\'', $index, $c);
+			}
+			if ($c eq '%') {
+			    $index++;
+			    $c = substr($string, $index, 1);
+			    if ($log->is_debug) {
+				$log->debugf('_tparam_internal[\'t%\' case]: $string index %d returns character \'%s\'', $index, $c);
+			    }
+			    if ($c eq '?') {
+				$level++;
+			    } elsif ($c eq ';') {
+				if ($level > 0) {
+				    $level--;
+				} else {
+				    last;
+				}
+			    } elsif ($c eq 'e' && $level == 0) {
+				last;
+			    }
+			}
+		    }
+		}
+	    } elsif ($c eq 'e') {
+		# scan forward for a %; at level zero
+		$index++;
+		$level = 0;
+		while ($index <= $indexmax) {
+		    my $c = substr($string, $index, 1);
+		    if ($log->is_debug) {
+			$log->debugf('_tparam_internal[\'e\' case]: $string index %d returns character \'%s\'', $index, $c);
+		    }
+		    if ($c eq '%') {
+			$index++;
+			$c = substr($string, $index, 1);
+			if ($log->is_debug) {
+			    $log->debugf('_tparam_internal[\'e%\' case]: $string index %d returns character \'%s\'', $index, $c);
+			}
+			if ($c eq '?') {
+			    $level++;
+			} elsif ($c eq ';') {
+			    if ($level > 0) {
+				$level--;
+			    } else {
+				last;
+			    }
+			}
+		    }
+		}
+	    } elsif ($c eq ';') {
+	    }
+	}
+	$index++;
+    }
+
+    if ($log->is_debug) {
+	$log->debugf('_tparam_internal: returns "%s"', $outbuf);
+    }
+    return $outbuf;
+}
+
+sub _spush {
+    my ($self, $stackp, $x) = @_;
+
+    if ($log->is_debug) {
+	$log->debugf('_spush($x=\"%s\")', $x);
+    }
+
+    push(@{$stackp}, {num_type => 0, str => $x});
+}
+
+sub _spop {
+    my ($self, $stackp) = @_;
+
+    my $pop = pop(@{$stackp});
+
+    if ($log->is_debug) {
+	$log->debugf('_spop() returns \"%s\"', $pop->{str});
+    }
+
+    return $pop->{str};
+}
+
+sub _npush {
+    my ($self, $stackp, $x) = @_;
+
+    if ($log->is_debug) {
+	$log->debugf('_npush($x=%d)', $x);
+    }
+
+    push(@{$stackp}, {num_type => 1, num => $x});
+}
+
+sub _npop {
+    my ($self, $stackp) = @_;
+
+    my $pop = pop(@{$stackp});
+
+    if ($log->is_debug) {
+	$log->debugf('_npop() returns %d', $pop->{num});
+    }
+
+    return $pop->{num};
+}
+
+=head2 tparm($self, $string, @param)
+
+Instantiates the string $string with parameters @param. Returns the string with the parameters applied.
+=cut
+
+sub tparm {
+    my ($self, $string, @param) = (@_);
+
+    return $self->_tparam_internal($string, @param);
+}
+
+=head2 tgoto($self, $string, $col, $row)
+
+Instantiates  instantiates the parameters into the given capability. The output from this routine is to be passed to tputs.
+=cut
+
+sub tgoto {
+    my ($self, $string, @param) = (@_);
+
+    return $self->_tparam_internal($string, @param);
 }
 
 =head1 EXPORTS
