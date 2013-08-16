@@ -56,7 +56,7 @@ This modules implements a terminfo X/open-compliant interface.
 
 =head1 SUBROUTINES/METHODS
 
-=head2 _new_instance($class, $opts)
+=head2 new($class, $opts)
 
 Instance a singleton object. Any implementation lie tgetent(), tgetflag(), etc... is using this singleton. An optional $opt hash, with corresponding environment variables, can control how the object is created:
 
