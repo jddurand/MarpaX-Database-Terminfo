@@ -2,6 +2,7 @@
 use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 2;
+use charnames ':full';
 use File::Spec;
 
 BEGIN {
@@ -16,4 +17,4 @@ $t->tgetent('ibcs2');
 # cup is the cursor adress
 #
 my $cupp = $t->tigetstr('cup');
-is ($t->tparm(${$cupp}, 18, 40), '\\E[19;41H', 'ibcs2 cursor_adress');
+is ($t->tparm(${$cupp}, 18, 40), "\N{ESC}[19;41H", "ibcs2 cursor_adress '${$cupp}' with parameters (18, 40)");
