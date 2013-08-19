@@ -2,6 +2,8 @@ use strict;
 use warnings FATAL => 'all';
 
 package MarpaX::Database::Terminfo::Interface;
+use MarpaX::Database::Terminfo;
+use MarpaX::Database::Terminfo::String;
 use MarpaX::Database::Terminfo::Constants qw/:all/;
 use File::ShareDir qw/:ALL/;
 use Carp qw/carp croak/;
@@ -65,6 +67,10 @@ a path to a binary version of the terminfo database, created using Storable modu
 
 a path to a text version of the terminfo<->termcap translation. This module is distributed with GNU ncurses translation files, namely: ncurses-Caps (default), ncurses-Caps.aix4 (default on AIX), ncurses-Caps.hpux11 (default on HP/UX), ncurses-Caps.keys, ncurses-Caps.osf1r5 (default on OSF1) and ncurses-Caps.uwin.
 
+=item $opts->{cache_stubs} or $ENV{MARPAX_DATABASE_CACHE_STUBS}
+
+a flag saying if the parsing of string features value should be cached or not. Each time a terminfo entry is loaded using tgetent(), every string feature is parsed using Marpa. If this is a true value, when another terminfo is loaded, there is no need to reparse a string feature value already parsed. Default is 1.
+
 =back
 
 Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
@@ -88,6 +94,8 @@ sub new {
 	$^O eq 'hpux'    ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.hpux11') :
 	$^O eq 'dec_osf' ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.osf1r5') :
 	dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps'));
+    my $cache_stubs = $opts->{cache_stubs} || $ENV{MARPAX_DATABASE_CACHE_STUBS};
+    $cache_stubs //= 1;
 
     my $db = undef;
     if ($file) {
@@ -179,6 +187,9 @@ sub new {
 	_infoalias => \%infoalias,
 	_static_vars => [],
 	_dynamic_vars => [],
+	_stubs => {},
+	_cache_stubs => $cache_stubs,
+	_cached_stubs => {},
     };
 
     bless($self, $class);
@@ -531,10 +542,91 @@ sub tgetent {
     #
     $found->{terminfo} = $found->{feature};
 
+    #
+    # Remove any static/dynamic var
+    #
+    $self->{_static_vars} = [];
+    $self->{_dynamic_vars} = [];
+
     $self->_terminfo_current($found);
+
+    #
+    # Create stubs for every string
+    #
+    $self->_stubs($name);
 
     return 1;
 }
+
+sub _stubs {
+    my ($self, $name) = @_;
+
+    foreach (@{$self->_terminfo_current->{terminfo}}) {
+	my $feature = $_;
+	if ($feature->{type} == TERMINFO_STRING) {
+	    # 
+	    # No need to recompute the value of a string already parsed
+	    #
+	    my $value = $feature->{value};
+	    if ($self->{_cache_stubs}) {
+		if (exists($self->{_cached_stubs}->{$value})) {
+		    $self->{_stubs}->{$value} = $self->{_cached_stubs}->{$value};
+		}
+	    }
+	    if (! exists($self->{_stubs}->{$value})) {
+		#
+		# Very important: we restore the ',': it is parsed as either
+		# and EOF (normal case) or an ENDIF (some entries are MISSING
+		# the '%;' ENDIF tag at the very end). I am not going to change
+		# the grammar when documentation says that a string follows
+		# the ALGOL68, which has introduced the ENDIF tag to solve the
+		# IF-THEN-ELSE-THEN ambiguity.
+		# There is no side-effect doing so, but keeping the grammar clean.
+		my $string = "$value,";
+		if ($log->is_debug) {
+		    $log->debugf('[Loading %s] Parsing %s using \'%s\'', $name, $feature->{name}, $string);
+		}
+		my $parseTreeValue = MarpaX::Database::Terminfo::String->new()->parse(\$string)->value();
+		#
+		# Enclose the result for anonymous subroutine evaluation
+		# We reindent everything by two spaces
+		#
+		my $indent = join("\n", map {"  $_"} @{${$parseTreeValue}});
+		my $stub = "
+sub {
+  my (\$elf, \$dynamicp, \$staticp, \@param) = \@_;
+  # Initialized with \@param to be termcap compatible
+  my \@iparam = \@param;
+  my \$rc = '';
+
+$indent
+  return \$rc;
+}
+";
+		if ($log->is_debug) {
+		    print STDERR "=================================\n";
+		    print STDERR "\n";
+		    print STDERR "Original was: $value\n";
+		    print STDERR "\n";
+		    print STDERR $stub;
+		    print STDERR "=================================\n";
+		}
+		$self->{_stubs}->{$value} = eval $stub;
+		if ($@) {
+		    die "$name.$value:\n$stub\n$@";
+		}
+		if ($self->{_cache_stubs}) {
+		    $self->{_cached_stubs}->{$value} = $self->{_stubs}->{$value};
+		}
+	    } else {
+		if ($log->is_debug) {
+		    $log->debugf('[Loading %s] Getting %s parse value from cache', $name, $feature->{name});
+		}
+	    }
+	}
+    }
+}
+
 #
 # _get_ospeed_and_baudrate calculates baudrate and ospeed
 #

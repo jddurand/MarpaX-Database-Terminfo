@@ -50,7 +50,7 @@ The grammar is a slightly revisited version of the one found at L<http://nixdoc.
 
 my %events = (
     'MAXMATCH' => sub {
-        my ($recce, $bufferp, $string, $start, $length) = @_;
+        my ($recce, $bufferp, $tokensrep, $string, $start, $length) = @_;
 
 	my @expected = @{$recce->terminals_expected()};
 	my $prev = pos(${$bufferp});
@@ -59,7 +59,7 @@ my %events = (
 	if ($log->is_trace) {
 	    $log->tracef('Expected terminals: %s', \@expected);
 	}
-	foreach (@TOKENSRE) {
+	foreach (@{$tokensrep}) {
 	    my ($token, $re) = @{$_};
 	    if ((grep {$_ eq $token} @expected)) {
 		if (${$bufferp} =~ $re) {
@@ -105,7 +105,10 @@ sub new {
   my $grammar_option = $grammarObj->grammar_option();
   $grammar_option->{bless_package} = __PACKAGE__;
   $self->{_G} = Marpa::R2::Scanless::G->new($grammar_option);
-  $self->{_R} = Marpa::R2::Scanless::R->new({grammar => $self->{_G}});
+
+  my $recce_option = $grammarObj->recce_option();
+  $recce_option->{grammar} = $self->{_G};
+  $self->{_R} = Marpa::R2::Scanless::R->new($recce_option);
 
   bless($self, $class);
 
@@ -118,8 +121,8 @@ Parses a terminfo database. Takes a pointer to a string as parameter.
 
 =cut
 
-sub parse {
-    my ($self, $bufferp) = @_;
+sub _parse {
+    my ($self, $bufferp, $tokensrep) = @_;
 
     my $max = length(${$bufferp});
     for (
@@ -132,13 +135,18 @@ sub parse {
         for my $event_data (@{$self->{_R}->events}) {
             my ($name) = @{$event_data};
             my $code = $events{$name} // die "no code for event $name";
-            $self->{_R}->$code($bufferp, $str, $start, $length);
+            $self->{_R}->$code($bufferp, $tokensrep, $str, $start, $length);
         }
     }
 
     return $self;
 }
-# ----------------------------------------------------------------------------------------
+
+sub parse {
+    my ($self, $bufferp) = @_;
+
+    return $self->_parse($bufferp, \@TOKENSRE);
+}
 # ----------------------------------------------------------------------------------------
 =head2 value($self)
 

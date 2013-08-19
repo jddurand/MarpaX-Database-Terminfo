@@ -27,12 +27,14 @@ Instance a new object.
 
 =cut
 
+our $GRAMMAR_CONTENT = do {local $/; <DATA>};
+
 sub new {
     my $class = shift;
 
     my $self = {};
 
-    $self->{_content} = do {local $/; <DATA>};
+    $self->{_content} = $GRAMMAR_CONTENT;
     $self->{_grammar_option} = {
 	action_object  => sprintf('%s::%s', __PACKAGE__, 'Actions'),
 	source => \$self->{_content}
