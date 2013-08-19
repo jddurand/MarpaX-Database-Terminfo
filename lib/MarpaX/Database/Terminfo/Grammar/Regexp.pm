@@ -21,11 +21,11 @@ This modules give the regular expressions associated to terminfo grammar.
 # List of escaped characters allowed in terminfo source files
 # ^x : Control-x (for any appropriate x)
 # any appropriate x here is all the ASCII Control Characters (C0 set + DEL, even if it is outdated)
-# \x where x can be a b E e f l n r s t ^ \ , : \d+
+# \x where x can be a b E e f l n r s t ^ \ , : 0 [0-7]{3}
 #
 our $C0 =          qr/[\@A-Z\[\\\]\^_ \?]/;
 our $CONTROLX      = qr/(?<!\^)(?>\^\^)*\^$C0/;                                                       # Takes care of ^^
-our $ALLOWED_BACKSLASHED_CHARACTERS = qr/(?:a|b|E|e|f|l|n|r|s|t|\^|\\|,|:|\d+)/;
+our $ALLOWED_BACKSLASHED_CHARACTERS = qr/(?:a|b|E|e|f|l|n|r|s|t|\^|\\|,|:|0|[0-7]{3})/;
 our $BACKSLASHX    = qr/(?<!\\)(?>\\\\)*\\$ALLOWED_BACKSLASHED_CHARACTERS/;                         # Takes care of \\
 our $ESCAPED       = qr/(?:$CONTROLX|$BACKSLASHX)/;
 our $I_CONSTANT = qr/(?:(0[xX][a-fA-F0-9]+(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?)             # Hexadecimal
