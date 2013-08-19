@@ -18,7 +18,7 @@ use Carp qw/croak/;
 
 =head1 DESCRIPTION
 
-This module parses a terminfo string and produces an anaonymous subroutine from it. If you want to enable logging, be aware that this module is a Log::Any thingy. This module is inheriting the value() method from MarpaX::Database::Terminfo.
+This module parses a terminfo string and produces an anonymous subroutine from it. If you want to enable logging, be aware that this module is a Log::Any thingy. This module is inheriting the value() method from MarpaX::Database::Terminfo.
 
 =head1 SYNOPSIS
 
