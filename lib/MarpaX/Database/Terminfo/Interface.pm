@@ -122,6 +122,7 @@ sub new {
     # Load Database
     # -------------
     my $db = undef;
+    my $db_ok = 0;
     if ($file) {
 	my $fh;
 	if ($log->is_debug) {
@@ -135,13 +136,24 @@ sub new {
 	    if ($log->is_debug) {
 		$log->debugf('Parsing %s', $file);
 	    }
-	    $db = MarpaX::Database::Terminfo->new()->parse(\$content)->value();
+	    eval {$db = MarpaX::Database::Terminfo->new()->parse(\$content)->value()};
+	    if ($@) {
+		carp $@;
+	    } else {
+		$db_ok = 1;
+	    }
 	}
-    } elsif ($txt) {
+    }
+    if (! $db_ok && $txt) {
 	if ($log->is_debug) {
 	    $log->debugf('Parsing txt');
 	}
-	$db = MarpaX::Database::Terminfo->new()->parse(\$txt)->value();
+	eval {$db = MarpaX::Database::Terminfo->new()->parse(\$txt)->value()};
+	if ($@) {
+	    carp $@;
+	} else {
+	    $db_ok = 1;
+	}
     } else {
 	my $fh;
 	if ($log->is_debug) {
@@ -150,9 +162,17 @@ sub new {
 	if (! open($fh, '<', $bin)) {
 	    carp "Cannot open $bin, $!";
 	} else {
-	    $db = fd_retrieve($fh);
+	    eval {$db = fd_retrieve($fh)};
+	    if ($@) {
+		carp "$bin: $@";
+	    } else {
+		$db_ok = 1;
+	    }
 	    close($fh) || carp "Cannot close $bin, $!";
 	}
+    }
+    if (! $db_ok) {
+	croak 'Cannot get a valid terminfo database';
     }
     # -----------------------
     # Load terminfo<->termcap
@@ -208,6 +228,7 @@ sub new {
     # Load stubs as txt
     # -----------------
     my $cached_stubs_as_txt = {};
+    my $cached_stubs_as_txt_ok = 0;
     if ($cache_stubs) {
 	if ($stubs_txt) {
 	    my $fh;
@@ -226,15 +247,21 @@ sub new {
 		    #
 		    # Because Data::Dumper have $VARxxx
 		    #
-		    no strict;
+		    no strict 'vars';
 		    #
 		    # Untaint data
 		    #
 		    my ($untainted) = $content =~ m/(.*)/s;
 		    $cached_stubs_as_txt = eval $untainted; ## no critic
+		    if ($@) {
+			carp "$stubs_txt: $@";
+		    } else {
+			$cached_stubs_as_txt_ok = 1;
+		    }
 		}
 	    }
-	} elsif ($stubs_bin) {
+	}
+	if (! $cached_stubs_as_txt_ok && $stubs_bin) {
 	    my $fh;
 	    if ($log->is_debug) {
 		$log->debugf('Loading %s', $stubs_bin);
@@ -242,7 +269,12 @@ sub new {
 	    if (! open($fh, '<', $stubs_bin)) {
 		carp "Cannot open $stubs_bin, $!";
 	    } else {
-		$cached_stubs_as_txt = fd_retrieve($fh);
+		eval {$cached_stubs_as_txt = fd_retrieve($fh)};
+		if ($@) {
+		    carp "$stubs_bin: $@";
+		} else {
+		    $cached_stubs_as_txt_ok = 1;
+		}
 		close($fh) || carp "Cannot close $stubs_bin, $!";
 	    }
 	}
