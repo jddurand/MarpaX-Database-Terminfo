@@ -72,15 +72,15 @@ a flag saying if the compiled stubs of string features value should be cached or
 
 =item $opts->{cache_stubs_as_txt} or $ENV{MARPAX_DATABASE_TERMINFO_CACHE_STUBS_AS_TXT}
 
-a flag saying if the string versions (i.e. not evaled) stubs of string features value should be cached or not. Each time a terminfo entry is loaded using tgetent(), every string feature is parsed using Marpa. If this is a true value, when another terminfo is loaded, there is no need to reparse a string feature value already parsed. Default is true.
+a flag saying if the string versions (i.e. not compiled) stubs of string features value should be cached or not. Each time a terminfo entry is loaded using tgetent(), every string feature is parsed using Marpa. If this is a true value, when another terminfo is loaded, there is no need to reparse a string feature value already parsed. Default is true.
 
 =item $opts->{stubs_txt} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT}
 
-a path to a text version of the terminfo<->stubs translation, created using Data::Dumper. The content of this file is the text version of all stubs, that will all be evaled after loading. This option is used only if cache_stubs is on. If set to any true value, this setting has precedence over the following bin key/value. Mostly useful for debugging or readability: the created stubs are immediately comprehensive, and if there is a bug in them, this option could be used.
+a path to a text version of the terminfo<->stubs translation, created using Data::Dumper. The content of this file is the text version of all stubs, that will be compiled if needed. This option is used only if cache_stubs is on. If set to any true value, this setting has precedence over the following bin key/value. Mostly useful for debugging or readability: the created stubs are immediately comprehensive, and if there is a bug in them, this option could be used.
 
 =item $opts->{stubs_bin} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN}
 
-a path to a binary version of the terminfo<->stubs translation, created using Storable module. The content of this file is the text version of all stubs, that will all be evaled after loading. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
+a path to a binary version of the terminfo<->stubs translation, created using Storable module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
 
 =back
 
@@ -231,13 +231,7 @@ sub new {
 		    # Untaint data
 		    #
 		    my ($untainted) = $content =~ m/(.*)/s;
-		    #
-		    # Same comment as in _stub();
-		    # Is there any other way to pass Perl::Critic but doing twice the eval ?
-		    # Perl::Critic disklike eval $stub_as_txt.
-		    # But eval {$stub_as_txt} will return the string, not the evaled version...
-		    #
-		    $cached_stubs_as_txt = eval {eval $untainted};
+		    $cached_stubs_as_txt = eval $untainted; ## no critic
 		}
 	    }
 	} elsif ($stubs_bin) {
@@ -688,13 +682,13 @@ sub tgetent {
 	#
 	if (exists($found->{terminfo}->{ospeed})) {
 	    if ($log->is_warn) {
-		$log->tracef('[Loading %s] Overwriting ospeed to \'%s\'', $name, $OSPEED->{value});	
+		$log->tracef('[Loading %s] Overwriting ospeed to \'%s\'', $name, $OSPEED->{value});
 	    }
 	}
 	$self->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
 	if (exists($found->{terminfo}->{baudrate})) {
 	    if ($log->is_warn) {
-		$log->tracef('[Loading %s] Overwriting baudrate to \'%s\'', $name, $BAUDRATE->{value});	
+		$log->tracef('[Loading %s] Overwriting baudrate to \'%s\'', $name, $BAUDRATE->{value});
 	    }
 	}
 	$self->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
@@ -781,12 +775,7 @@ $indent
 	if ($log->is_trace) {
 	    $log->tracef('Compiling \'%s\' stub', $featurevalue);
 	}
-	#
-	# Is there any other way to pass Perl::Critic but doing twice the eval ?
-	# Perl::Critic disklike eval $stub_as_txt.
-	# But eval {$stub_as_txt} will return the string, not the evaled version...
-	#
-	$self->{_stubs}->{$featurevalue} = eval {eval $stub_as_txt};
+	$self->{_stubs}->{$featurevalue} = eval $stub_as_txt;  ## no critic
 	if ($@) {
 	    carp "Problem with $featurevalue\n$stub_as_txt\n$@\nReplaced by a stub returning empty string...";
 	    $self->{_stubs}->{$featurevalue} = sub {return '';};
