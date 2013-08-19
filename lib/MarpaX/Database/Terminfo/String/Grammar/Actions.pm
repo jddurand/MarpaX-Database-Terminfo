@@ -167,7 +167,7 @@ sub addEscapedCharacterToRc {
 	} else {
 	    carp "Unsupported control character '$c'\n";
 	}
-	
+
     } elsif (substr($c, 0, 1) eq '\\') {
 	#
 	# Spec says this must be octal digits
@@ -216,7 +216,7 @@ sub addPercentToRc {
     return "\$rc .= '%';";
 }
 
-=head2 addPrintPopRc($self, $c)
+=head2 addPrintPopToRc($self, $c)
 
 Generates code that appends a print of pop() like %c in printf().
 

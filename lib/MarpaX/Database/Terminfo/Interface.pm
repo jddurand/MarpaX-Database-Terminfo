@@ -154,7 +154,8 @@ sub new {
 	} else {
 	    $db_ok = 1;
 	}
-    } else {
+    }
+    if (! $db_ok) {
 	my $fh;
 	if ($log->is_debug) {
 	    $log->debugf('Loading %s', $bin);
@@ -992,7 +993,7 @@ sub _tget {
 	    }
 	}
     }
-    
+
     if ($found && defined($areap)) {
 	if (! defined(${$areap})) {
 	    ${$areap} = '';
