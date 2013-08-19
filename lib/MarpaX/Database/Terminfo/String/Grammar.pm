@@ -190,7 +190,7 @@ unit ::= ESCAPED_CHARACTER                              action => addEscapedChar
 elifUnit ::= ELSE units THEN units                      action => elifUnit
 elifUnits ::= elifUnit*
 
-_CONST      ~ [^']              # It appears that SQUOTE never appears within %'' (always true ?) 
+_CONST      ~ [^']              # It appears that SQUOTE never appears within %'' (always true ?)
 _CONST      ~ _BS _ALLOWED_BS   # or an escaped character
 _DIGITS     ~ [\d]+
 _DIGIT      ~ [\d]

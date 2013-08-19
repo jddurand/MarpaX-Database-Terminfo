@@ -152,7 +152,6 @@ sub addEscapedCharacterToRc {
 	    #
 	    # Shall I use \c\X or chr(28) ? Even if it seems an overhead \c\X seems more portable
 	    #
-	    
  	    $rc = "\c\X";
 	    substr($rc, -1, 1, '');
 	} elsif ($this eq ']') {
@@ -175,7 +174,7 @@ sub addEscapedCharacterToRc {
 	#
 	my $oct = $c;
 	substr($oct, 0, 1, '');
-	$rc = chr(oct($oct) || 0200);
+	$rc = chr(oct($oct) || oct(200));
     } else {
 	carp "Unhandled escape sequence $c\n";
     }
@@ -217,7 +216,7 @@ sub addPercentToRc {
     return "\$rc .= '%';";
 }
 
-=head2 addPrintPop($self, $c)
+=head2 addPrintPopRc($self, $c)
 
 Generates code that appends a print of pop() like %c in printf().
 
@@ -243,7 +242,7 @@ sub addPrintToRc {
     my ($self, $format) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addPrintPopToRc(format="%s")', $format);
+	$log->tracef('addPrintToRc(format="%s")', $format);
     }
 
     #
@@ -385,7 +384,7 @@ sub addPushConst {
     if (length($const) > 1) {
 	my $oct = $const;
 	substr($oct, 0, 1, '');
-	$c = chr(oct($oct) || 0200);
+	$c = chr(oct($oct) || oct(200));
     } else {
 	$c = $const;
     }
@@ -412,7 +411,6 @@ sub addPushInt {
     my $value = $int;
     substr($value, 0, 2, '');
     substr($value, -1, 1, '');
-    $value ||= 0200;
 
     return "push(\@iparam, $value); # $int";
 }
@@ -674,7 +672,7 @@ sub addComplement {
 
 =head2 addOneToParams($self, $one)
 
-Generates code that adds 1 to all params (in practice not more than two)
+Generates code that adds 1 to all parameters (in practice not more than two)
 
 =cut
 
