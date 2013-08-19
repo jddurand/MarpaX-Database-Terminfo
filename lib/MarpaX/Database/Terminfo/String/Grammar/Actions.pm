@@ -46,8 +46,8 @@ sub _doEndLevel {
 sub _doIndent {
     my ($self) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('_doIndent');
+    if ($log->is_trace) {
+	$log->tracef('_doIndent');
     }
 
     return "\t" x $self->{_level};
@@ -59,30 +59,11 @@ Generates code that appends escaped character $c to the output of generated code
 
 =cut
 
-sub _getNumber {
-    my ($self, $string) = @_;
-
-    if ($log->is_debug) {
-	$log->debugf('_getNumber(string="%s")', $string);
-    }
-
-    my $number = 0;
-    pos($string) = undef;
-    while ($string =~ m/\G\d/smg) {
-	$number = $number * 10 + substr($string, $-[0], $+[0] - $-[0]);
-    }
-    if (! $number) {
-	$number = 0200;
-    }
-
-    return $number;
-}
-
 sub addEscapedCharacterToRc {
     my ($self, $c) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addEscapedCharacterToRc(c="%s")', $c);
+    if ($log->is_trace) {
+	$log->tracef('addEscapedCharacterToRc(c="%s")', $c);
     }
 
     my $rc = '';
@@ -189,9 +170,12 @@ sub addEscapedCharacterToRc {
 	}
 	
     } elsif (substr($c, 0, 1) eq '\\') {
-	my $this = $c;
-	substr($this, 0, 1, '');
-	$rc = chr($self->_getNumber($this));
+	#
+	# Spec says this must be octal digits
+	#
+	my $oct = $c;
+	substr($oct, 0, 1, '');
+	$rc = chr(oct($oct) || 0200);
     } else {
 	carp "Unhandled escape sequence $c\n";
     }
@@ -209,8 +193,8 @@ Generates code that appends character $c to the output of generated code.
 sub addCharacterToRc {
     my ($self, $c) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addCharacterToRc(c="%s")', $c);
+    if ($log->is_trace) {
+	$log->tracef('addCharacterToRc(c="%s")', $c);
     }
 
     my $ord = ord($c);
@@ -226,8 +210,8 @@ Generates code that appends character '%' to the output of generated code.
 sub addPercentToRc {
     my ($self, $c) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addPercentToRc(c="%s")', $c);
+    if ($log->is_trace) {
+	$log->tracef('addPercentToRc(c="%s")', $c);
     }
 
     return "\$rc .= '%';";
@@ -242,8 +226,8 @@ Generates code that appends a print of pop() like %c in printf().
 sub addPrintPopToRc {
     my ($self, $c) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addPrintPopToRc(c="%s")', $c);
+    if ($log->is_trace) {
+	$log->tracef('addPrintPopToRc(c="%s")', $c);
     }
 
     return "\$rc .= sprintf('%c', pop(\@iparam)); # $c";
@@ -258,8 +242,8 @@ Generates code that appends a print of pop() using the $format string in the ter
 sub addPrintToRc {
     my ($self, $format) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addPrintPopToRc(format="%s")', $format);
+    if ($log->is_trace) {
+	$log->tracef('addPrintPopToRc(format="%s")', $format);
     }
 
     #
@@ -283,8 +267,8 @@ sub addPushToRc {
     my ($self, $push) = @_;
     # %p[1-9]
 
-    if ($log->is_debug) {
-	$log->debugf('addpushToRc(push="%s")', $push);
+    if ($log->is_trace) {
+	$log->tracef('addpushToRc(push="%s")', $push);
     }
 
     my $indice = ord(substr($push, -1, 1)) - ord('0') - 1;
@@ -301,8 +285,8 @@ sub addDynPop {
     my ($self, $dynpop) = @_;
     # %P[a-z]
 
-    if ($log->is_debug) {
-	$log->debugf('addDynPop(dynpop="%s")', $dynpop);
+    if ($log->is_trace) {
+	$log->tracef('addDynPop(dynpop="%s")', $dynpop);
     }
 
     my $indice = ord(substr($dynpop, -1, 1)) - ord('a') - 1;
@@ -319,8 +303,8 @@ sub addDynPush {
     my ($self, $dynpush) = @_;
     # %g[a-z]
 
-    if ($log->is_debug) {
-	$log->debugf('addDynPush(dynpush="%s")', $dynpush);
+    if ($log->is_trace) {
+	$log->tracef('addDynPush(dynpush="%s")', $dynpush);
     }
 
     my $indice = ord(substr($dynpush, -1, 1)) - ord('a') - 1;
@@ -337,8 +321,8 @@ sub addStaticPop {
     my ($self, $staticpop) = @_;
     # %P[A-Z]
 
-    if ($log->is_debug) {
-	$log->debugf('addStaticPop(staticpop="%s")', $staticpop);
+    if ($log->is_trace) {
+	$log->tracef('addStaticPop(staticpop="%s")', $staticpop);
     }
 
     my $indice = ord(substr($staticpop, -1, 1)) - ord('A') - 1;
@@ -355,8 +339,8 @@ sub addStaticPush {
     my ($self, $staticpush) = @_;
     # %g[A-Z]
 
-    if ($log->is_debug) {
-	$log->debugf('addStaticPush(staticpush="%s")', $staticpush);
+    if ($log->is_trace) {
+	$log->tracef('addStaticPush(staticpush="%s")', $staticpush);
     }
 
     my $indice = ord(substr($staticpush, -1, 1)) - ord('A') - 1;
@@ -373,8 +357,8 @@ sub addL {
     my ($self, $l) = @_;
     # %l
 
-    if ($log->is_debug) {
-	$log->debugf('addL(l="%s")', $l);
+    if ($log->is_trace) {
+	$log->tracef('addL(l="%s")', $l);
     }
 
     return "push(\@iparam, strlen(pop(\@iparam)); # $l";
@@ -390,8 +374,8 @@ sub addPushConst {
     my ($self, $const) = @_;
     # %'c'
 
-    if ($log->is_debug) {
-	$log->debugf('addPushConst(const="%s")', $const);
+    if ($log->is_trace) {
+	$log->tracef('addPushConst(const="%s")', $const);
     }
 
     #
@@ -399,8 +383,9 @@ sub addPushConst {
     #
     my $c;
     if (length($const) > 1) {
-	substr($const, 0, 1, '');
-	$c = chr($self->_getNumber($const));
+	my $oct = $const;
+	substr($oct, 0, 1, '');
+	$c = chr(oct($oct) || 0200);
     } else {
 	$c = $const;
     }
@@ -420,14 +405,14 @@ sub addPushInt {
     my ($self, $int) = @_;
     # %{nn}
 
-    if ($log->is_debug) {
-	$log->debugf('addPushInt(int="%s")', $int);
+    if ($log->is_trace) {
+	$log->tracef('addPushInt(int="%s")', $int);
     }
 
     my $value = $int;
     substr($value, 0, 2, '');
     substr($value, -1, 1, '');
-    $value = $self->_getNumber($value);
+    $value ||= 0200;
 
     return "push(\@iparam, $value); # $int";
 }
@@ -442,8 +427,8 @@ sub addPlus {
     my ($self, $plus) = @_;
     # %+
 
-    if ($log->is_debug) {
-	$log->debugf('addPlus(plus="%s")', $plus);
+    if ($log->is_trace) {
+	$log->tracef('addPlus(plus="%s")', $plus);
     }
 
     return "push(\@iparam, pop(\@iparam) + pop(\@iparam)); # $plus";
@@ -459,8 +444,8 @@ sub addMinus {
     my ($self, $minus) = @_;
     # %+
 
-    if ($log->is_debug) {
-	$log->debugf('addMinus(minus="%s")', $minus);
+    if ($log->is_trace) {
+	$log->tracef('addMinus(minus="%s")', $minus);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x - \$y); } # $minus";
@@ -476,8 +461,8 @@ sub addStar {
     my ($self, $star) = @_;
     # %+
 
-    if ($log->is_debug) {
-	$log->debugf('addStar(star="%s")', $star);
+    if ($log->is_trace) {
+	$log->tracef('addStar(star="%s")', $star);
     }
 
     return "push(\@iparam, pop(\@iparam) * pop(\@iparam)); # $star";
@@ -493,8 +478,8 @@ sub addDiv {
     my ($self, $div) = @_;
     # %+
 
-    if ($log->is_debug) {
-	$log->debugf('addDiv(div="%s")', $div);
+    if ($log->is_trace) {
+	$log->tracef('addDiv(div="%s")', $div);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$y ? int(\$x / \$y) : 0); } # $div";
@@ -510,8 +495,8 @@ sub addMod {
     my ($self, $mod) = @_;
     # %+
 
-    if ($log->is_debug) {
-	$log->debugf('addMod(mod="%s")', $mod);
+    if ($log->is_trace) {
+	$log->tracef('addMod(mod="%s")', $mod);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$y ? int(\$x % \$y) : 0); } # $mod";
@@ -527,8 +512,8 @@ sub addBitAnd {
     my ($self, $bitAnd) = @_;
     # %&
 
-    if ($log->is_debug) {
-	$log->debugf('addBitAnd(bitAnd="%s")', $bitAnd);
+    if ($log->is_trace) {
+	$log->tracef('addBitAnd(bitAnd="%s")', $bitAnd);
     }
 
     return "push(\@iparam, pop(\@iparam) & pop(\@iparam)); # $bitAnd";
@@ -544,8 +529,8 @@ sub addBitOr {
     my ($self, $bitOr) = @_;
     # %|
 
-    if ($log->is_debug) {
-	$log->debugf('addBitOr(bitOr="%s")', $bitOr);
+    if ($log->is_trace) {
+	$log->tracef('addBitOr(bitOr="%s")', $bitOr);
     }
 
     return "push(\@iparam, pop(\@iparam) | pop(\@iparam)); # $bitOr";
@@ -561,8 +546,8 @@ sub addBitXor {
     my ($self, $bitXor) = @_;
     # %^
 
-    if ($log->is_debug) {
-	$log->debugf('addBitXor(bitXor="%s")', $bitXor);
+    if ($log->is_trace) {
+	$log->tracef('addBitXor(bitXor="%s")', $bitXor);
     }
 
     return "push(\@iparam, pop(\@iparam) ^ pop(\@iparam)); # $bitXor";
@@ -578,8 +563,8 @@ sub addEqual {
     my ($self, $equal) = @_;
     # %=
 
-    if ($log->is_debug) {
-	$log->debugf('addEqual(equal="%s")', $equal);
+    if ($log->is_trace) {
+	$log->tracef('addEqual(equal="%s")', $equal);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x == \$y); } # $equal";
@@ -595,8 +580,8 @@ sub addGreater {
     my ($self, $greater) = @_;
     # %>
 
-    if ($log->is_debug) {
-	$log->debugf('addGreater(greater="%s")', $greater);
+    if ($log->is_trace) {
+	$log->tracef('addGreater(greater="%s")', $greater);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x > \$y); } # $greater";
@@ -612,8 +597,8 @@ sub addLower {
     my ($self, $lower) = @_;
     # %<
 
-    if ($log->is_debug) {
-	$log->debugf('addLower(lower="%s")', $lower);
+    if ($log->is_trace) {
+	$log->tracef('addLower(lower="%s")', $lower);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x < \$y); } # $lower";
@@ -629,8 +614,8 @@ sub addLogicalAnd {
     my ($self, $logicalAnd) = @_;
     # %A
 
-    if ($log->is_debug) {
-	$log->debugf('addLogicalAnd(logicalAnd="%s")', $logicalAnd);
+    if ($log->is_trace) {
+	$log->tracef('addLogicalAnd(logicalAnd="%s")', $logicalAnd);
     }
 
     return "push(\@iparam, pop(\@iparam) && pop(\@iparam)); # $logicalAnd";
@@ -646,8 +631,8 @@ sub addLogicalOr {
     my ($self, $logicalOr) = @_;
     # %O
 
-    if ($log->is_debug) {
-	$log->debugf('addLogicalOr(logicalOr="%s")', $logicalOr);
+    if ($log->is_trace) {
+	$log->tracef('addLogicalOr(logicalOr="%s")', $logicalOr);
     }
 
     return "push(\@iparam, pop(\@iparam) || pop(\@iparam)); # $logicalOr";
@@ -663,8 +648,8 @@ sub addNot {
     my ($self, $not) = @_;
     # %!
 
-    if ($log->is_debug) {
-	$log->debugf('addNot(not="%s")', $not);
+    if ($log->is_trace) {
+	$log->tracef('addNot(not="%s")', $not);
     }
 
     return "push(\@iparam, ! pop(\@iparam)); # $not";
@@ -680,8 +665,8 @@ sub addComplement {
     my ($self, $complement) = @_;
     # %!
 
-    if ($log->is_debug) {
-	$log->debugf('addComplement(complement="%s")', $complement);
+    if ($log->is_trace) {
+	$log->tracef('addComplement(complement="%s")', $complement);
     }
 
     return "push(\@iparam, ~ pop(\@iparam)); # $complement";
@@ -697,8 +682,8 @@ sub addOneToParams {
     my ($self, $one) = @_;
     # %i
 
-    if ($log->is_debug) {
-	$log->debugf('addOneToParams(one="%s")', $one);
+    if ($log->is_trace) {
+	$log->tracef('addOneToParams(one="%s")', $one);
     }
 
     return "map {\$param[\$_]++} (0..\$#param); # $one";
@@ -713,8 +698,8 @@ Generates code that adds generated if {} $elsifUnits else {}.
 sub addIfThenElse {
     my ($self, $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addIfThenElse($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $else="%s", $units3p="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif);
+    if ($log->is_trace) {
+	$log->tracef('addIfThenElse($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $else="%s", $units3p="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif);
     }
 
     #
@@ -722,20 +707,24 @@ sub addIfThenElse {
     #
     my $units1     = join("\n", map {"         $_"} @{$units1p});
     my $units2     = join("\n", map {"  $_"} @{$units2p});
-    my $elsifUnits = join("\n", @{$elsifUnitsp});
+    my $elsifUnits = join("\n", map {"  $_"} @{$elsifUnitsp});
     my $units3     = join("\n", map {"  $_"} @{$units3p});
+    #
+    # $endif can be the EOF
+    #
+    $endif ||= 'implicit by eof';
 
     my $rc = <<END;
-if (do {
+if (do { # $if
 $units1
          pop(\@iparam);
-       }) {
+       }) { # $then
 $units2
 }
 $elsifUnits
-else {
+else { # $else
 $units3
-}
+} # $endif
 END
     return $rc;
 }
@@ -749,23 +738,27 @@ Generates code that adds generated if {} $elsifUnits.
 sub addIfThen {
     my ($self, $if, $units1p, $then, $units2p, $elsifUnitsp, $endif) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('addIfThen($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $endif);
+    if ($log->is_trace) {
+	$log->tracef('addIfThen($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $endif);
     }
     #
     # We increase indentation of units1 by nine spaces (look to length of 'if (do {', the other by two spaces
     #
     my $units1     = join("\n", map {"         $_"} @{$units1p});
     my $units2     = join("\n", map {"  $_"} @{$units2p});
-    my $elsifUnits = join("\n", @{$elsifUnitsp});
+    my $elsifUnits = join("\n", map {"  $_"} @{$elsifUnitsp});
+    #
+    # $endif can be the EOF
+    #
+    $endif ||= 'implicit by eof';
 
     my $rc = <<END;
-if (do {
+if (do { # $if
 $units1
          pop(\@iparam);
-       }) {
+       }) { # $then
 $units2
-}
+} # $endif
 $elsifUnits
 END
     return $rc;
@@ -780,8 +773,8 @@ Generates code that adds generated elsif {}.
 sub elifUnit {
     my ($self, $else, $units1p, $then, $units2p) = @_;
 
-    if ($log->is_debug) {
-	$log->debugf('elifUnit($else="%s", $units1p="%s", $then="%s", $units2p="%s")', $else, $units1p, $then, $units2p);
+    if ($log->is_trace) {
+	$log->tracef('elifUnit($else="%s", $units1p="%s", $then="%s", $units2p="%s")', $else, $units1p, $then, $units2p);
     }
     #
     # We increase indentation of units1 by twelve spaces (look to length of 'elsif (do {', the other by two spaces
@@ -790,10 +783,10 @@ sub elifUnit {
     my $units2     = join("\n", map {"  $_"} @{$units2p});
 
     my $rc = <<END;
-elsif (do {
+elsif (do { # $else
 $units1
             pop(\@iparam);
-       }) {
+       }) { # $then
 $units2
 }
 END
