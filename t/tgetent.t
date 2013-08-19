@@ -10,12 +10,12 @@ BEGIN {
     use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:all/ ) || print "Bail out!\n";
     $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
+    $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
 }
 #
 # Test all terminals in the ncurses database
 #
 my $t = MarpaX::Database::Terminfo::Interface->new();
-$t->_terminfo_init;
 my %alias = ();
 foreach (@{$t->_terminfo_db}) {
     foreach (@{$_->{alias}}) {
