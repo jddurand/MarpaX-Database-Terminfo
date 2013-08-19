@@ -16,10 +16,14 @@ BEGIN {
 #
 my $t = MarpaX::Database::Terminfo::Interface->new();
 $t->_terminfo_init;
+my %alias = ();
 foreach (@{$t->_terminfo_db}) {
     foreach (@{$_->{alias}}) {
-	++$number_of_tests_run;
-	is($t->tgetent($_), 1, "\$t->tgetent('$_')");
+	++$alias{$_};
     }
+}
+foreach (sort keys %alias) {
+    ++$number_of_tests_run;
+    is($t->tgetent($_), 1, "\$t->tgetent('$_')");
 }
 done_testing( $number_of_tests_run );
