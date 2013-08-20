@@ -86,6 +86,10 @@ a path to a binary version of the terminfo<->stubs translation, created using St
 
 Specific to ancient BSD programs, like nethack, that likes to get systematic delays. Default is false.
 
+=item $opts->{use_env} or $ENV{MARPAX_DATABASE_TERMINFO_USE_ENV}
+
+Initial value of use_env boolean, saying if lines and columns specified in terminfo are used or not. Default value is true. Please refer to the use_env() method.
+
 =back
 
 Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
@@ -122,6 +126,7 @@ sub new {
 	$stubs_bin = '';
     }
     my $bsd_tputs = $optp->{bsd_tputs} // $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS} // 0;
+    my $use_env   = $optp->{use_env  } // $ENV{MARPAX_DATABASE_TERMINFO_USE_ENV}   // 1;
 
     # -------------
     # Load Database
@@ -301,6 +306,7 @@ sub new {
 	_flush => [ sub {} ],
 	_bsd_tputs => $bsd_tputs,
 	_term => undef,              # Current terminal
+	_use_env => $use_env,
     };
 
     bless($self, $class);
@@ -1324,7 +1330,7 @@ sub tparm {
 
 =head2 tgoto($self, $string, $col, $row)
 
-Instantiates  instantiates the parameters into the given capability. The output from this routine is to be passed to tputs.
+Instantiates the parameters into the given capability. The output from this routine is to be passed to tputs.
 =cut
 
 sub tgoto {
@@ -1335,6 +1341,33 @@ sub tgoto {
     # Reversal of arguments is intentional
     #
     return $self->_tparm($string, $row, $col);
+}
+
+=head2 use_env($self[, $boolean])
+
+Returns or set the use_env boolean. $boolean can be anything, this is internally convert to either 0 or 1.
+=cut
+
+sub use_env {
+    my $self = shift;
+
+    if (@_) {
+	$self->{_use_env} = shift;
+	#
+	# If user gave undef as argument, convert it to 0.
+	#
+	if (! defined($self->{_use_env})) {
+	    $self->{_use_env} = 0;
+	}
+	#
+	# Finally convert it to 1 if ! false
+	#
+	if (! $self->{_use_env}) {
+	    $self->{_use_env} = 1;
+	}
+    }
+
+    return $self->{_use_env};
 }
 
 =head1 SEE ALSO
