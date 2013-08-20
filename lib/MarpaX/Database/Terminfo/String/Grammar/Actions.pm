@@ -43,16 +43,6 @@ sub _doEndLevel {
     return "\$rc;";
 }
 
-sub _doIndent {
-    my ($self) = @_;
-
-    if ($log->is_trace) {
-	$log->tracef('_doIndent');
-    }
-
-    return "\t" x $self->{_level};
-}
-
 =head2 addEscapedCharacterToRc($self, $c)
 
 Generates code that appends escaped character $c to the output of generated code.
