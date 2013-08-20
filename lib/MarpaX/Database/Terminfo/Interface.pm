@@ -1291,6 +1291,18 @@ sub _tputs {
     }
 }
 
+=head2 putp($self, $str)
+
+Calls $self->tputs($str, 1, sub {print STDOUT shift}). Note that the output of putp always goes to stdout, not to the fildes specified in setupterm..
+
+=cut
+
+sub putp {
+    my ($self, $str) = @_;
+
+    return $self->tputs($str, 1, sub {print STDOUT shift});
+}
+
 =head2 tparm($self, $string, @param)
 
 Instantiates the string $string with parameters @param. Returns the string with the parameters applied.
