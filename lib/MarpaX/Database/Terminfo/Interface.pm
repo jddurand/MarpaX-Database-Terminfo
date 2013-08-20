@@ -436,7 +436,7 @@ sub flush {
 
 =head2 tgetent($self, $name[, $fh])
 
-Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{TERMINFO_BAUDRATE} (unchecked, i.e. at your own risk) or is derived from ospeed, or 0. $fh is an optional opened filehandle, used to guess about baudrate and ospeed. Defaults to fileno(\*STDIN) or 0. When loading a terminfo, termcap and variable entries are automatically derived using the caps parameter as documented in _new_instance().
+Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, or $ENV{MARPAX_DATABASE_TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or "13". ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{MARPAX_DATABASE_TERMINFO_BAUDRATE} (unchecked! i.e. at your own risk) or is derived from ospeed, or "9600". $fh is an optional opened filehandle, used to guess about baudrate and ospeed. Defaults to fileno(\*STDIN) or 0. When loading a terminfo, termcap and variable entries are automatically derived using the caps parameter as documented in _new_instance().
 
 =cut
 
@@ -901,8 +901,8 @@ sub _get_ospeed_and_baudrate {
 	$fh = undef;
     }
 
-    if (defined($ENV{TERMINFO_OSPEED})) {
-	$ospeed = $ENV{TERMINFO_OSPEED};
+    if (defined($ENV{MARPAX_DATABASE_TERMINFO_OSPEED})) {
+	$ospeed = $ENV{MARPAX_DATABASE_TERMINFO_OSPEED};
     } else {
 	if ($HAVE_POSIX) {
 	    my $termios = eval { POSIX::Termios->new() };
@@ -939,13 +939,23 @@ sub _get_ospeed_and_baudrate {
 	}
     }
 
+
+
     if (! exists($OSPEED_TO_BAUDRATE{$ospeed})) {
 	if ($log->is_warn) {
-	    $log->warnf('ospeed %d is an unknown value. baudrate will be zero.', $ospeed);
+	    $log->warnf('ospeed %d is an unknown value', $ospeed);
+	}
+	$ospeed = 0;
+    }
+
+    if (! $ospeed) {
+	$ospeed = 13;
+	if ($log->is_warn) {
+	    $log->warnf('ospeed defaulting to %d', $ospeed);
 	}
     }
 
-    $baudrate = $ENV{TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
+    $baudrate = $ENV{MARPAX_DATABASE_TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
 
     if ($log->is_debug) {
 	$log->debugf('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
