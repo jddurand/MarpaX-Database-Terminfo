@@ -21,7 +21,7 @@ my $cupp = $t->tigetstr('cup');
 my $got = '';
 my $wanted = chr(12) . chr(72) . chr(114) . chr(255) . chr(255) . chr(255) . chr(255) . chr(255) . chr(0);
 $t->tputs($t->tgoto(${$cupp} . '$<1>', 40, 18), 1, \&outc);
-is($got, $wanted, 'cup at 18:40 under terminal dm2500 that have pad_char'); 
+is($got, $wanted, 'cup at 18:40 under terminal dm2500 that have pad_char');
 
 sub outc {
     my ($c) = @_;

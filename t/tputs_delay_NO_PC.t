@@ -21,7 +21,7 @@ my $cupp = $t->tigetstr('cup');
 my $got = '';
 my $wanted = chr(27) . chr(91) . chr(49) . chr(57) . chr(59) . chr(52) . chr(49) . chr(72) . chr(0);
 $t->tputs($t->tgoto(${$cupp} . '$<1000>', 40, 18), 1, \&outc);
-is($got, $wanted, 'cup at 18:40 under terminal ibcs2 that have no pad_char'); 
+is($got, $wanted, 'cup at 18:40 under terminal ibcs2 that have no pad_char');
 
 sub outc {
     my ($c) = @_;
