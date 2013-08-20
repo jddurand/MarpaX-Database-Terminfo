@@ -8,7 +8,7 @@ use MarpaX::Database::Terminfo::Constants qw/:all/;
 use File::ShareDir qw/:ALL/;
 use Carp qw/carp croak/;
 use Storable qw/fd_retrieve/;
-use Time::HiRes;
+use Time::HiRes qw/usleep/;
 use Log::Any qw/$log/;
 use constant BAUDBYTE => 9; # From GNU Ncurses: 9 = 7 bits + 1 parity + 1 stop
 our $HAVE_POSIX = eval "use POSIX; 1;" || 0;
@@ -82,6 +82,10 @@ a path to a text version of the terminfo<->stubs translation, created using Data
 
 a path to a binary version of the terminfo<->stubs translation, created using Storable module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
 
+=item $opts->{bsd_tputs} or $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS}
+
+Specific to ancient BSD programs, like nethack, that likes to get systematic delays. Default is false.
+
 =back
 
 Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
@@ -117,6 +121,7 @@ sub new {
 	$stubs_txt = '';
 	$stubs_bin = '';
     }
+    my $bsd_tputs = $optp->{bsd_tputs} // $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS} // 0;
 
     # -------------
     # Load Database
@@ -294,6 +299,8 @@ sub new {
 	_cache_stubs_as_txt => $cache_stubs_as_txt,
 	_cached_stubs_as_txt => $cached_stubs_as_txt,
 	_flush => [ sub {} ],
+	_bsd_tputs => $bsd_tputs,
+	_term => undef,              # Current terminal
     };
 
     bless($self, $class);
@@ -718,13 +725,13 @@ sub tgetent {
 		$log->tracef('[Loading %s] Overwriting ospeed to \'%s\'', $name, $OSPEED->{value});
 	    }
 	}
-	$self->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
+	$found->{terminfo}->{ospeed} = $found->{variable}->{ospeed};
 	if (exists($found->{terminfo}->{baudrate})) {
 	    if ($log->is_warn) {
 		$log->tracef('[Loading %s] Overwriting baudrate to \'%s\'', $name, $BAUDRATE->{value});
 	    }
 	}
-	$self->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
+	$found->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
     }
 
     #
@@ -1017,23 +1024,27 @@ sub delay {
     my ($self, $ms) = @_;
 
     #
-    # $self->{_outch} is created/destroyed by tputs() and al.
+    # $self->{_outc} and $self->{_outcArgs} are created/destroyed by tputs() and al.
     #
-    my $outch = $self->{_outch};
-    if (defined($outch)) {
+    my $outc = $self->{_outc};
+    if (defined($outc)) {
 	my $PC = $self->tvgetstr('PC');
 	if ($self->tvgetflag('no_pad_char') == 1 || ref($PC) ne 'SCALAR') {
-	    usleep($ms);
+	    #
+	    # usleep() unit is micro-second
+	    #
+	    usleep($ms * 1000);
 	} else {
 	    #
-	    # tparm(${$PC}) should be constant, but who knows
+	    # tparm(${$PC}) should be constant, but who knows.
+	    # baudrate is always defined.
 	    #
 	    my $nullcount = ($ms * $self->tvgetnum('baudrate')) / (BAUDBYTE * 1000);
 	    #
 	    # We have no interface to 'tack' program, so no need to have a global for _nulls_sent
 	    #
 	    while ($nullcount-- > 0) {
-		&$outch($self->tparm(${$PC}));
+		&$outc($self->tparm(${$PC}), @{$self->{_outcArgs}});
 	    }
 	    #
 	    # Call for a flush
@@ -1143,15 +1154,141 @@ sub tvgetstr {
     return $self->_tget('variable', 0, 0, -1, TERMINFO_STRING, $id);
 }
 
-=head2 tputs($self, $str, $affcnt, $putc, @putcArgs)
+=head2 tputs($self, $str, $affcnt, $outc, @outcArgs)
 
-Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $putc is a putchar-like routine to which the characters are passed, one at a time, as first argument, and @putcArgs as remaining arguments.
+Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $outc is a putchar-like routine to which the characters are passed, one at a time, as first argument, and @outcArgs as remaining arguments.
 
 =cut
 
 sub tputs {
-    my ($self, $str, $affcnt, $putc, @putcArgs) = @_;
-    return $self->_tget(0, TERMINFO_STRING, @_);
+    my ($self, $str, $affcnt, $outc, @outcArgs) = @_;
+
+    $self->{_outc} = $outc;
+    $self->{_outcArgs} = \@outcArgs;
+
+    $self->_tputs($str, $affcnt, $outc, @outcArgs);
+
+    $self->{_outc} = undef;
+    $self->{_outcArgs} = undef;
+}
+
+sub _tputs {
+    my ($self, $str, $affcnt, $outc, @outcArgs) = @_;
+
+    $affcnt //= 1;
+
+    my $bell = $self->tvgetstr('flash_screen');
+    my $flash_screen = $self->tvgetstr('flash_screen');
+
+    my $always_delay;
+    my $normal_delay;
+
+    if (! defined($self->{_term})) {
+	#
+	# No current terminal: setuppterm() has not been called
+	#
+	$always_delay = 0;
+	$normal_delay = 1;
+    } else {
+	$always_delay =
+	    ((ref($bell) eq 'SCALAR' && $str eq ${$bell}) ||
+	     (ref($flash_screen) eq 'SCALAR' && $str eq ${$flash_screen})) ? 1 : 0;
+	$normal_delay =
+	    (($self->tvgetnum('xon_xoff') != 1)          &&
+	     ($self->tvgetnum('padding_baud_rate') == 1) &&
+	     #
+	     # $self->tvgetnum('baudrate') is always defined: value is >= 0
+	     # $self->tvgetnum('padding_baud_rate') may return < 0 if absent or problem
+	     #
+	     ($self->tvgetnum('baudrate') >= $self->tvgetnum('padding_baud_rate'))) ? 1 : 0;
+    }
+
+    my $trailpad = 0;
+    pos($str) = undef;
+    if ($self->{_bsd_tputs} && length($str) > 0) {
+	if ($str =~ /^([[:digit:]]+)(?:\.([[:digit:]])?[[:digit:]]*)?(\*)?/) {
+	    my ($one, $two, $three) = (
+		substr($str, $-[1], $+[1] - $-[1]),
+		defined($-[2]) ? substr($str, $-[2], $+[2] - $-[2]) : 0,
+		defined($-[3]) ? 1 : 0);
+	    $trailpad = $one * 10;
+	    $trailpad += $two;
+	    if ($three) {
+		$trailpad *= $affcnt;
+	    }
+	    pos($str) = $+[0];
+	}
+    }
+    my $indexmax = length($str);
+    my $index = pos($str) || 0;
+    while ($index <= $indexmax) {
+	my $c = substr($str, $index, 1);
+	if ($c ne '$') {
+	    &$outc($c, @outcArgs);
+	} else {
+	    $index++;
+	    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+	    if ($c ne '<') {
+		&$outc('$', @outcArgs);
+		if ($c) {
+		    &$outc($c, @outcArgs);
+		}
+	    } else {
+		$c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
+		if ((! ($c =~ /[[:digit:]]/) && $c ne '.') ||
+		    # Note: if $index is after the end $str, perl treat it as the end
+		    index($str, '>', $index) < $index) {
+		    &$outc('$', @outcArgs);
+		    &$outc('<', @outcArgs);
+		    #
+		    # The EOF will automatically go here
+		    #
+		    next;
+		}
+
+		my $number = 0;
+		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+		while ($c =~ /[[:digit:]]/) {
+		    $number = $number * 10 + $c;
+		    $c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
+		}
+		$number *= 10;
+		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+		if ($c eq '.') {
+		    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+		    if ($c =~ /[[:digit:]]/) {
+			$number += $c;
+			$index++;
+		    }
+		    while (($index <= $indexmax) && substr($str, $index, 1) =~ /[[:digit:]]/) {
+			$index++;
+		    }
+		}
+		my $mandatory = 0;
+		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+		while ($c eq '*' || $c eq '/') {
+		    if ($c eq '*') {
+			$number *= $affcnt;
+			$index++;
+		    } else {
+			$mandatory = 1;
+			$index++;
+		    }
+		    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+		}
+
+		if ($number > 0 && ($always_delay || $normal_delay || $mandatory)) {
+		    $self->delay(int($number / 10));
+		}
+	    }
+	}
+
+	$index++;
+    }
+
+    if ($trailpad > 0 && ($always_delay || $normal_delay)) {
+	$self->delay(int($trailpad / 10));
+    }
 }
 
 =head2 tparm($self, $string, @param)
