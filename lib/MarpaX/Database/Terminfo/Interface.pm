@@ -891,28 +891,27 @@ sub _get_ospeed_and_baudrate {
     my $baudrate = 0;
     my $ospeed = 0;
 
+    if (defined($fh)) {
+	my $reffh = ref($fh);
+	if ($reffh ne 'GLOB') {
+	    if ($log->is_warn) {
+		$log->warnf('filehandle should be a reference to GLOB instead of %s', $reffh || '<nothing>');
+	    }
+	}
+	$fh = undef;
+    }
+
     if (defined($ENV{TERMINFO_OSPEED})) {
 	$ospeed = $ENV{TERMINFO_OSPEED};
     } else {
-	my $termios = undef;
 	if ($HAVE_POSIX) {
-	    $termios = eval { POSIX::Termios->new() };
+	    my $termios = eval { POSIX::Termios->new() };
 	    if (! defined($termios)) {
 		if ($log->is_trace) {
 		    $log->tracef('POSIX::Termios->new() failure, %s', $@);
 		}
 	    } else {
-		my $fileno = fileno(\*STDIN) || 0;
-		if (defined($fh)) {
-		    my $reffh = ref($fh);
-		    if ($reffh ne 'GLOB') {
-			if ($log->is_warn) {
-			    $log->warnf('filehandle should be a reference to GLOB instead of %s', $reffh || '<nothing>');
-			}
-		    } else {
-			$fileno = fileno($fh);
-		    }
-		}
+		my $fileno = defined($fh) ? fileno($fh) : (fileno(\*STDIN) || 0);
 		if ($log->is_trace) {
 		    $log->tracef('Trying to get attributes on fileno %d', $fileno);
 		}
@@ -924,17 +923,17 @@ sub _get_ospeed_and_baudrate {
 		    $termios = undef;
 		}
 	    }
-	}
-	if (defined($termios)) {
-	    my $this = eval { $termios->getospeed() };
-	    if (! defined($ospeed)) {
-		if ($log->is_trace) {
-		    $log->tracef('getospeed() failure, %s', $@);
-		}
-	    } else {
-		$ospeed = $this;
-		if ($log->is_trace) {
-		    $log->tracef('getospeed() returned %d', $ospeed);
+	    if (defined($termios)) {
+		my $this = eval { $termios->getospeed() };
+		if (! defined($this)) {
+		    if ($log->is_trace) {
+			$log->tracef('getospeed() failure, %s', $@);
+		    }
+		} else {
+		    $ospeed = $this;
+		    if ($log->is_trace) {
+			$log->tracef('getospeed() returned %d', $ospeed);
+		    }
 		}
 	    }
 	}
@@ -947,6 +946,10 @@ sub _get_ospeed_and_baudrate {
     }
 
     $baudrate = $ENV{TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
+
+    if ($log->is_debug) {
+	$log->debugf('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
+    }
 
     return ($baudrate, $ospeed);
 }
