@@ -18,4 +18,7 @@ $t->tgetent('ibcs2');
 # cm is the cursor adress
 #
 my $cmp = $t->tgetstr('cm');
-is ($t->tgoto(${$cmp}, 18, 40), "\N{ESC}[19;41H", 'ibcs2 cursor_adress');
+#
+# Note: arguments are column and row
+#
+is ($t->tgoto(${$cmp}, 40, 18), "\N{ESC}[19;41H", 'ibcs2 cursor_adress');

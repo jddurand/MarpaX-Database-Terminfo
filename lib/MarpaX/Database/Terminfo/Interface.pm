@@ -293,7 +293,7 @@ sub new {
 	_cached_stubs => {},
 	_cache_stubs_as_txt => $cache_stubs_as_txt,
 	_cached_stubs_as_txt => $cached_stubs_as_txt,
-	_flush => undef,
+	_flush => [ sub {} ],
     };
 
     bless($self, $class);
@@ -393,7 +393,7 @@ sub _infoalias {
     return $self->{_infoalias};
 }
 
-=head2 _terminfo_init()
+=head2 _terminfo_init($self)
 
 Internal function. Initialize if needed and if possible the current terminfo. Returns a pointer to the current terminfo entry.
 
@@ -414,14 +414,14 @@ Defines a flush callback function $cb with optional @arguments. Such callback is
 =cut
 
 sub flush {
-    my $self = shift;
-    if (@_) {
-	$self->{_flush} = \@_;
+    my ($self, $cb, @args) = @_;
+    if (defined($cb)) {
+	$self->{_flush} = [ $cb, @args ];
     }
     return $self->{_flush};
 }
 
-=head2 tgetent($name[, $fh])
+=head2 tgetent($self, $name[, $fh])
 
 Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, and is $ENV{TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or 0. ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{TERMINFO_BAUDRATE} (unchecked, i.e. at your own risk) or is derived from ospeed, or 0. $fh is an optional opened filehandle, used to guess about baudrate and ospeed. Defaults to fileno(\*STDIN) or 0. When loading a terminfo, termcap and variable entries are automatically derived using the caps parameter as documented in _new_instance().
 
@@ -1007,7 +1007,7 @@ sub _tget {
     return $rc;
 }
 
-=head2 delay($ms)
+=head2 delay($self, $ms)
 
 Do a delay of $ms milliseconds when producing the output. If the current terminfo variable no_pad_char is true, or if there is no PC variable, do a system sleep. Otherwise use the PC variable as many times as necessary followed by a flush callback. Do nothing if outside of a "producing output" context (i.e. tputs(), etc...). Please note that delay by itself in the string is not recognized as a grammar lexeme. This is tputs() that is seeing the delay.
 
@@ -1035,122 +1035,122 @@ sub delay {
 	    while ($nullcount-- > 0) {
 		&$outch($self->tparm(${$PC}));
 	    }
-	    my $flushp = $self->flush;
-	    if (defined($flushp)) {
-		my ($cb, @args) = @{$flushp};
-		&$cb(@args);
-	    }
+	    #
+	    # Call for a flush
+	    #
+	    my ($flushcb, @flushargs) = @{$self->flush};
+	    &$flushcb(@flushargs);
 	}
     }
 }
 
-=head2 tgetflag($id)
+=head2 tgetflag($self, $id)
 
 Gets the boolean value for termcap entry $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetflag {
-    my $self = shift;
-    return $self->_tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, $id);
 }
 
-=head2 tigetflag($id)
+=head2 tigetflag($self, $id)
 
 Gets the boolean value for terminfo entry $id. Returns the value -1 if $id is not a boolean capability, or 0 if it is canceled or absent from the terminal description.
 
 =cut
 
 sub tigetflag {
-    my $self = shift;
-    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, $id);
 }
 
-=head2 tvgetflag($id)
+=head2 tvgetflag($self, $id)
 
 Gets the boolean value for terminfo variable $id. Returns the value -1 if $id is not a boolean capability, or 0 if it is canceled or absent from the terminal description.
 
 =cut
 
 sub tvgetflag {
-    my $self = shift;
-    return $self->_tget('variable', 0, 0, -1, TERMINFO_BOOLEAN, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('variable', 0, 0, -1, TERMINFO_BOOLEAN, $id);
 }
 
-=head2 tgetnum($id)
+=head2 tgetnum($self, $id)
 
 Gets the numeric value for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetnum {
-    my $self = shift;
-    return $self->_tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, $id);
 }
 
-=head2 tigetnum($id)
+=head2 tigetnum($self, $id)
 
 Gets the numeric value for terminfo entry $id. Returns the value -2 if $id is not a numeric capability, or -1 if it is canceled or absent from the terminal description.
 
 =cut
 
 sub tigetnum {
-    my $self = shift;
-    return $self->_tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, $id);
 }
 
-=head2 tvgetnum($id)
+=head2 tvgetnum($self, $id)
 
 Gets the numeric value for terminfo variable $id. Returns the value -2 if $id is not a numeric capability, or -1 if it is canceled or absent from the terminal description.
 
 =cut
 
 sub tvgetnum {
-    my $self = shift;
-    return $self->_tget('variable', -1, -1, -2, TERMINFO_NUMERIC, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('variable', -1, -1, -2, TERMINFO_NUMERIC, $id);
 }
 
-=head2 tgetstr($id, $areap)
+=head2 tgetstr($self, $id[, $areap])
 
 Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetstr {
-    my $self = shift;
-    return $self->_tget('termcap', 0, undef, undef, TERMINFO_STRING, @_);
+    my ($self, $id, $areap) = @_;
+    return $self->_tget('termcap', 0, undef, undef, TERMINFO_STRING, $id, $areap);
 }
 
-=head2 tigetstr($id)
+=head2 tigetstr($self, $id)
 
 Returns a reference to terminfo string entry for $id, or -1 if $id is not a string capabilitty, or 0 it is canceled or absent from terminal description.
 
 =cut
 
 sub tigetstr {
-    my $self = shift;
-    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_STRING, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_STRING, $id);
 }
 
-=head2 tvgetstr($id)
+=head2 tvgetstr($self, $id)
 
 Returns a reference to terminfo variable entry for $id, or -1 if $id is not a string capabilitty, or 0 it is canceled or absent from terminal description.
 
 =cut
 
 sub tvgetstr {
-    my $self = shift;
-    return $self->_tget('variable', 0, 0, -1, TERMINFO_STRING, @_);
+    my ($self, $id) = @_;
+    return $self->_tget('variable', 0, 0, -1, TERMINFO_STRING, $id);
 }
 
-=head2 tputs($str, $affcnt, $putc)
+=head2 tputs($self, $str, $affcnt, $putc, @putcArgs)
 
-Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $putc is a putchar-like routine to which the characters are passed, one at a time.
+Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $putc is a putchar-like routine to which the characters are passed, one at a time, as first argument, and @putcArgs as remaining arguments.
 
 =cut
 
 sub tputs {
-    my $self = shift;
+    my ($self, $str, $affcnt, $putc, @putcArgs) = @_;
     return $self->_tget(0, TERMINFO_STRING, @_);
 }
 
@@ -1179,9 +1179,13 @@ Instantiates  instantiates the parameters into the given capability. The output 
 =cut
 
 sub tgoto {
-    my ($self, $string, @param) = (@_);
-
-    return $self->_tparm($string, @param);
+    my ($self, $string, $col, $row) = (@_);
+    #
+    # We are in a pure terminfo workflow: capnames capability are translated to a terminfo feature, and the
+    # string feature is derived from the found terminfo feature.
+    # Reversal of arguments is intentional
+    #
+    return $self->_tparm($string, $row, $col);
 }
 
 =head1 SEE ALSO
