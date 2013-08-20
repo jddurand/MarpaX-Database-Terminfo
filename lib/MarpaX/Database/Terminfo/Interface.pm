@@ -795,7 +795,8 @@ sub _stub {
 	    # Enclose the result for anonymous subroutine evaluation
 	    # We reindent everything by two spaces
 	    #
-	    my $indent = join("\n", map {"  $_"} @{${$parseTreeValue}});
+	    my $indent = join("\n", @{${$parseTreeValue}});
+	    $indent =~ s/^/  /smg;
 	    $stub_as_txt = "
 #
 # Stub version of: $featurevalue
@@ -807,7 +808,6 @@ sub {
   my \$rc = '';
 
 $indent
-
   return \$rc;
 }
 ";
@@ -957,8 +957,8 @@ sub _get_ospeed_and_baudrate {
 
     $baudrate = $ENV{MARPAX_DATABASE_TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
 
-    if ($log->is_debug) {
-	$log->debugf('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
+    if ($log->is_trace) {
+	$log->tracef('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
     }
 
     return ($baudrate, $ospeed);

@@ -690,30 +690,35 @@ sub addIfThenElse {
 	$log->tracef('addIfThenElse($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $else="%s", $units3p="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif);
     }
 
+    my $units1     = join("\n", @{$units1p});
+    my $units2     = join("\n", @{$units2p});
+    my $elsifUnits = join("\n", @{$elsifUnitsp});
+    my $units3     = join("\n", @{$units3p});
     #
-    # We increase indentation of units1 by nine spaces (the length of 'if (do {', the others by two spaces
+    # We increase indentation of units
     #
-    my $units1     = join("\n", map {"         $_"} @{$units1p});
-    my $units2     = join("\n", map {"  $_"} @{$units2p});
-    my $elsifUnits = join("\n", map {"  $_"} @{$elsifUnitsp});
-    my $units3     = join("\n", map {"  $_"} @{$units3p});
+    $units1     =~ s/^/         /smg;
+    $units2     =~ s/^/  /smg;
+    $units3     =~ s/^/  /smg;
     #
     # $endif can be the EOF
     #
     $endif ||= 'implicit by eof';
 
-    my $rc = <<END;
-if (do { # $if
+    my $rc = "if (do { # $if
 $units1
          pop(\@iparam);
        }) { # $then
 $units2
-}
-$elsifUnits
+}";
+    if ($elsifUnits) {
+	$rc .= "\n$elsifUnits";
+    }
+    $rc .= "
 else { # $else
 $units3
-} # $endif
-END
+} # $endif";
+
     return $rc;
 }
 
@@ -729,26 +734,30 @@ sub addIfThen {
     if ($log->is_trace) {
 	$log->tracef('addIfThen($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $endif);
     }
+
+    my $units1     = join("\n", @{$units1p});
+    my $units2     = join("\n", @{$units2p});
+    my $elsifUnits = join("\n", @{$elsifUnitsp});
     #
-    # We increase indentation of units1 by nine spaces (look to length of 'if (do {', the other by two spaces
+    # We increase indentation of units
     #
-    my $units1     = join("\n", map {"         $_"} @{$units1p});
-    my $units2     = join("\n", map {"  $_"} @{$units2p});
-    my $elsifUnits = join("\n", map {"  $_"} @{$elsifUnitsp});
+    $units1     =~ s/^/         /smg;
+    $units2     =~ s/^/  /smg;
     #
     # $endif can be the EOF
     #
     $endif ||= 'implicit by eof';
 
-    my $rc = <<END;
-if (do { # $if
+    my $rc = "if (do { # $if
 $units1
          pop(\@iparam);
        }) { # $then
 $units2
-} # $endif
-$elsifUnits
-END
+} # $endif";
+    if ($elsifUnits) {
+	$rc .= "\n$elsifUnits";
+    }
+
     return $rc;
 }
 
@@ -764,20 +773,21 @@ sub elifUnit {
     if ($log->is_trace) {
 	$log->tracef('elifUnit($else="%s", $units1p="%s", $then="%s", $units2p="%s")', $else, $units1p, $then, $units2p);
     }
+    my $units1     = join("\n", @{$units1p});
+    my $units2     = join("\n", @{$units2p});
     #
-    # We increase indentation of units1 by twelve spaces (look to length of 'elsif (do {', the other by two spaces
+    # We increase indentation of units
     #
-    my $units1     = join("\n", map {"            $_"} @{$units1p});
-    my $units2     = join("\n", map {"  $_"} @{$units2p});
+    $units1     =~ s/^/            /smg;
+    $units2     =~ s/^/  /smg;
 
-    my $rc = <<END;
-elsif (do { # $else
+    my $rc = "elsif (do { # $else
 $units1
             pop(\@iparam);
        }) { # $then
 $units2
-}
-END
+}";
+
     return $rc;
 }
 
@@ -790,7 +800,7 @@ Routine executed at EOF. It is also preventing undef to be pass through the pars
 sub eof {
     my ($self, @args) = @_;
 
-    return '# End of stub';
+    return '';
 }
 
 =head2 ifEndif($self, ...)
