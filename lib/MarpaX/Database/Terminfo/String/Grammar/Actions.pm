@@ -288,7 +288,7 @@ sub addDynPop {
 	$log->tracef('addDynPop(dynpop="%s")', $dynpop);
     }
 
-    my $indice = ord(substr($dynpop, -1, 1)) - ord('a') - 1;
+    my $indice = ord(substr($dynpop, -1, 1)) - ord('a');
     return "\$dynamicp->[$indice] = pop(\@iparam); # $dynpop";
 }
 
@@ -306,7 +306,7 @@ sub addDynPush {
 	$log->tracef('addDynPush(dynpush="%s")', $dynpush);
     }
 
-    my $indice = ord(substr($dynpush, -1, 1)) - ord('a') - 1;
+    my $indice = ord(substr($dynpush, -1, 1)) - ord('a');
     return "push(\@iparam, \$dynamicp->[$indice]); # $dynpush";
 }
 
@@ -324,7 +324,7 @@ sub addStaticPop {
 	$log->tracef('addStaticPop(staticpop="%s")', $staticpop);
     }
 
-    my $indice = ord(substr($staticpop, -1, 1)) - ord('A') - 1;
+    my $indice = ord(substr($staticpop, -1, 1)) - ord('A');
     return "\$staticp->[$indice] = pop(\@iparam); # $staticpop";
 }
 
@@ -342,7 +342,7 @@ sub addStaticPush {
 	$log->tracef('addStaticPush(staticpush="%s")', $staticpush);
     }
 
-    my $indice = ord(substr($staticpush, -1, 1)) - ord('A') - 1;
+    my $indice = ord(substr($staticpush, -1, 1)) - ord('A');
     return "push(\@iparam, \$staticp->[$indice]); # $staticpush";
 }
 
