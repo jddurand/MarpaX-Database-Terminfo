@@ -1,7 +1,16 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.006 2013-08-21T10:32:01
+0.007 2013-08-21T21:56:18
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - xtest compliance
+ - use Test::File::ShareDir
+ - POD fix
+ - network order for Storable
+ - Generated missing comment
+
+0.006 2013-08-21T10:34:00
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Release of version 0.006
  - Marpa::R2 DSL compliance
  - In POD, "terminfo x variable" -> "x variable"
  - POD typo
