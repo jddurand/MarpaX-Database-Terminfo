@@ -585,7 +585,7 @@ sub tgetent {
 	    my $feature = $_;
 	    my $key = $feature->{name};
 	    #
-	    # terminfo lookup
+	    # For terminfo lookup
 	    #
 	    if (! exists($found->{terminfo}->{$key})) {
 		$found->{terminfo}->{$key} = $feature;
@@ -645,8 +645,8 @@ sub tgetent {
 		if ($log->is_trace) {
 		    $log->tracef('[Loading %s] Pushing variable feature \'%s\'', $name, $variable);
 		}
-		if (! exists($found->{variable}->{$key})) {
-		    $found->{variable}->{$key} = $feature;
+		if (! exists($found->{variable}->{$variable})) {
+		    $found->{variable}->{$variable} = $feature;
 		    #
 		    # Keep track of pad_char, cursor_up and backspace_if_not_bs
 		    if ($type == TERMINFO_STRING) {
@@ -968,7 +968,7 @@ sub _get_ospeed_and_baudrate {
 # space refers to termcap, feature (i.e. terminfo) or variable
 #
 sub _tget {
-    my ($self, $space, $default, $default_if_cancelled, $default_if_wrong_type, $type, $id, $areap) = (@_);
+    my ($self, $space, $default, $default_if_cancelled, $default_if_wrong_type, $default_if_found, $type, $id, $areap) = (@_);
 
     my $rc = $default;
     my $found = undef;
@@ -1006,9 +1006,9 @@ sub _tget {
 		if ($feature->{type} == $type) {
 		    $found = $feature;
 		    if ($type == TERMINFO_STRING) {
-			$rc = \$feature->{value};
+			$rc = defined($default_if_found) ? $default_if_found : \$feature->{value};
 		    } else {
-			$rc = $feature->{value};
+			$rc = defined($default_if_found) ? $default_if_found : $feature->{value};
 		    }
 		} elsif (defined($default_if_wrong_type)) {
 		    if ($log->is_trace) {
@@ -1020,14 +1020,17 @@ sub _tget {
 	}
     }
 
-    if ($found && defined($areap)) {
-	if (! defined(${$areap})) {
-	    ${$areap} = '';
+    if (defined($found) && defined($areap) && ref($areap)) {
+	if ($type == TERMINFO_STRING) {
+	    if (! defined(${$areap})) {
+		${$areap} = '';
+	    }
+	    my $pos = pos(${$areap}) || 0;
+	    substr(${$areap}, $pos, 0, $found->{value});
+	    pos(${$areap}) = $pos + length($found->{value});
+	} else {
+	    ${$areap} = $found->{value};
 	}
-	my $pos = pos(${$areap}) || 0;
-	my $this = ref($rc) ? ${$rc} : $rc;
-	substr(${$areap}, $pos, 0, $this);
-	pos(${$areap}) = $pos + length($this);
     }
 
     return $rc;
@@ -1047,23 +1050,24 @@ sub delay {
     #
     my $outc = $self->{_outc};
     if (defined($outc)) {
-	my $PC = $self->tvgetstr('PC');
-	if ($self->tvgetflag('no_pad_char') == 1 || ref($PC) ne 'SCALAR') {
+	my $PC;
+	if ($self->tvgetflag('no_pad_char') || ! $self->tvgetstr('PC', \$PC)) {
 	    #
 	    # usleep() unit is micro-second
 	    #
 	    usleep($ms * 1000);
 	} else {
 	    #
-	    # tparm(${$PC}) should be constant, but who knows.
 	    # baudrate is always defined.
 	    #
-	    my $nullcount = ($ms * $self->tvgetnum('baudrate')) / (BAUDBYTE * 1000);
+	    my $baudrate;
+	    $self->tvgetnum('baudrate', \$baudrate);
+	    my $nullcount = ($ms * $baudrate) / (BAUDBYTE * 1000);
 	    #
 	    # We have no interface to 'tack' program, so no need to have a global for _nulls_sent
 	    #
 	    while ($nullcount-- > 0) {
-		&$outc($self->tparm(${$PC}), @{$self->{_outcArgs}});
+		&$outc($self->tparm($PC), @{$self->{_outcArgs}});
 	    }
 	    #
 	    # Call for a flush
@@ -1082,7 +1086,7 @@ Gets the boolean value for termcap entry $id, or 0 if not available. Only the fi
 
 sub tgetflag {
     my ($self, $id) = @_;
-    return $self->_tget('termcap', 0, undef, undef, TERMINFO_BOOLEAN, $id);
+    return $self->_tget('termcap', 0, undef, undef, undef, TERMINFO_BOOLEAN, $id, undef);
 }
 
 =head2 tigetflag($self, $id)
@@ -1093,29 +1097,29 @@ Gets the boolean value for terminfo entry $id. Returns the value -1 if $id is no
 
 sub tigetflag {
     my ($self, $id) = @_;
-    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_BOOLEAN, $id);
+    return $self->_tget('terminfo', 0, 0, -1, undef, TERMINFO_BOOLEAN, $id, undef);
 }
 
 =head2 tvgetflag($self, $id)
 
-Gets the boolean value for terminfo variable $id. Returns the value -1 if $id is not a boolean capability, or 0 if it is canceled or absent from the terminal description.
+Search for the terminfo boolean variable $id. Return true if found, false in all other cases.
 
 =cut
 
 sub tvgetflag {
     my ($self, $id) = @_;
-    return $self->_tget('variable', 0, 0, -1, TERMINFO_BOOLEAN, $id);
+    return $self->_tget('variable', 0, 0, 0, 1, TERMINFO_BOOLEAN, $id);
 }
 
 =head2 tgetnum($self, $id)
 
-Gets the numeric value for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
+Stores the numeric value for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetnum {
     my ($self, $id) = @_;
-    return $self->_tget('termcap', -1, undef, undef, TERMINFO_NUMERIC, $id);
+    return $self->_tget('termcap', -1, undef, undef, undef, TERMINFO_NUMERIC, $id, undef);
 }
 
 =head2 tigetnum($self, $id)
@@ -1126,29 +1130,29 @@ Gets the numeric value for terminfo entry $id. Returns the value -2 if $id is no
 
 sub tigetnum {
     my ($self, $id) = @_;
-    return $self->_tget('terminfo', -1, -1, -2, TERMINFO_NUMERIC, $id);
+    return $self->_tget('terminfo', -1, -1, -2, undef, TERMINFO_NUMERIC, $id, undef);
 }
 
-=head2 tvgetnum($self, $id)
+=head2 tvgetnum($self, $id, [$areap])
 
-Gets the numeric value for terminfo variable $id. Returns the value -2 if $id is not a numeric capability, or -1 if it is canceled or absent from the terminal description.
+Search for the terminfo numeric variable $id. If found, return true and store its value in the eventual ${$areap}, return false in all other cases.
 
 =cut
 
 sub tvgetnum {
-    my ($self, $id) = @_;
-    return $self->_tget('variable', -1, -1, -2, TERMINFO_NUMERIC, $id);
+    my ($self, $id, $areap) = @_;
+    return $self->_tget('variable', 0, 0, 0, 1, TERMINFO_NUMERIC, $id, $areap);
 }
 
-=head2 tgetstr($self, $id[, $areap])
+=head2 tgetstr($self, $id, [$areap])
 
-Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined, the pos()isition in the buffer is updated with the $id value, and its pos()isition is updated. Only the first two characters of the id parameter are compared in lookups.
+Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined and is a reference: if $id is a string then the found value is inserted at current pos()isition in ${$areap} and pos()isition is updated, otherwise (i.e. boolean and numeric cases) ${$areap} is overwriten with the found value. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
 sub tgetstr {
     my ($self, $id, $areap) = @_;
-    return $self->_tget('termcap', 0, undef, undef, TERMINFO_STRING, $id, $areap);
+    return $self->_tget('termcap', 0, undef, undef, undef, TERMINFO_STRING, $id, $areap);
 }
 
 =head2 tigetstr($self, $id)
@@ -1159,18 +1163,19 @@ Returns a reference to terminfo string entry for $id, or -1 if $id is not a stri
 
 sub tigetstr {
     my ($self, $id) = @_;
-    return $self->_tget('terminfo', 0, 0, -1, TERMINFO_STRING, $id);
+    return $self->_tget('terminfo', 0, 0, -1, undef, TERMINFO_STRING, $id, undef);
 }
 
-=head2 tvgetstr($self, $id)
+=head2 tvgetstr($self, $id, [$areap])
 
-Returns a reference to terminfo variable entry for $id, or -1 if $id is not a string capabilitty, or 0 it is canceled or absent from terminal description.
+Search for the terminfo string variable $id. If found, return true and insert its value at pos()istion of eventual ${$areap}, this pos() being updated after the insert, return false in all other cases.
 
 =cut
 
 sub tvgetstr {
-    my ($self, $id) = @_;
-    return $self->_tget('variable', 0, 0, -1, TERMINFO_STRING, $id);
+    my ($self, $id, $areap
+) = @_;
+    return $self->_tget('variable', 0, 0, 0, 1, TERMINFO_STRING, $id, $areap);
 }
 
 =head2 tputs($self, $str, $affcnt, $outc, @outcArgs)
@@ -1196,8 +1201,10 @@ sub _tputs {
 
     $affcnt //= 1;
 
-    my $bell = $self->tvgetstr('flash_screen');
-    my $flash_screen = $self->tvgetstr('flash_screen');
+    my $bell = '';
+    $self->tvgetstr('bell', \$bell);
+    my $flash_screen = '';
+    $self->tvgetstr('flash_screen', \$flash_screen);
 
     my $always_delay;
     my $normal_delay;
@@ -1209,17 +1216,14 @@ sub _tputs {
 	$always_delay = 0;
 	$normal_delay = 1;
     } else {
-	$always_delay =
-	    ((ref($bell) eq 'SCALAR' && $str eq ${$bell}) ||
-	     (ref($flash_screen) eq 'SCALAR' && $str eq ${$flash_screen})) ? 1 : 0;
-	$normal_delay =
-	    (($self->tvgetnum('xon_xoff') != 1)          &&
-	     ($self->tvgetnum('padding_baud_rate') == 1) &&
-	     #
-	     # $self->tvgetnum('baudrate') is always defined: value is >= 0
-	     # $self->tvgetnum('padding_baud_rate') may return < 0 if absent or problem
-	     #
-	     ($self->tvgetnum('baudrate') >= $self->tvgetnum('padding_baud_rate'))) ? 1 : 0;
+	my $xon_xoff = $self->tvgetflag('xon_xoff');
+	my $padding_baud_rate = 0;
+	$self->tvgetnum('padding_baud_rate', \$padding_baud_rate);
+	my $baudrate = 0;
+	$self->tvgetnum('baudrate', \$baudrate);
+
+	$always_delay = ($str eq $bell || $str eq $flash_screen) ? 1 : 0;
+	$normal_delay = (! $xon_xoff && $padding_baud_rate && $baudrate >= $padding_baud_rate) ? 1 : 0;
     }
 
     my $trailpad = 0;
