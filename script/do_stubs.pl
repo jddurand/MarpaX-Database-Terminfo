@@ -2,7 +2,7 @@
 use strict;
 use diagnostics;
 use Data::Dumper;
-use Storable qw/store_fd/;
+use Storable qw/nstore_fd/;
 use POSIX qw/EXIT_SUCCESS/;
 use Log::Log4perl qw/:easy/;
 use Log::Any::Adapter;
@@ -48,7 +48,7 @@ foreach (sort keys %alias) {
     my $outfile = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
     open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
     print STDERR "Writing ncurses stubs (as text) with Storable into $outfile\n";
-    store_fd $t->{_cached_stubs_as_txt}, \*OUTFILE;
+    nstore_fd $t->{_cached_stubs_as_txt}, \*OUTFILE;
     close(OUTFILE) || warn "Cannot close $outfile, $!\n";
 }
 {
