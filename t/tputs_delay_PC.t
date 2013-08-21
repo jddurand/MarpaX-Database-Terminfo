@@ -13,10 +13,10 @@ BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
         $path = $1;
 }
 
-use Test::File::ShareDir 
+use Test::File::ShareDir
     -root  =>  $path,
     -share =>  {
-	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir }, 
+	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
 	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
 };
 #------------------------------------------------------
