@@ -11,6 +11,6 @@ BEGIN {
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
     $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
 }
-my $t = MarpaX::Database::Terminfo::Interface->new();
+my $t = MarpaX::Database::Terminfo::Interface->new({use_env => 0});
 $t->tgetent('dumb');
 is($t->tgetnum('co'), 80, "\$t->tgetnum('co')");

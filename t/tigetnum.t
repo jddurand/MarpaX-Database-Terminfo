@@ -11,7 +11,7 @@ BEGIN {
     $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
     $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
 }
-my $t = MarpaX::Database::Terminfo::Interface->new();
+my $t = MarpaX::Database::Terminfo::Interface->new({use_env => 0});
 $t->tgetent('nsterm-16color');
 is($t->tigetnum('wsl'), 50, "\$t->tigetnum('wsl') - numeric value");
 is($t->tigetnum('fsl'), -2, "\$t->tigetnum('fsl') - not a numeric capability");
