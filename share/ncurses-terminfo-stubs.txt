@@ -11265,7 +11265,7 @@ sub {
 
   $rc .= chr(11); # \\013
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\' \'
+  push(@iparam, chr(32)); # %\' \'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   $rc .= chr(16); # \\020
@@ -22725,7 +22725,7 @@ sub {
   $rc .= chr(27); # \\E
   $rc .= chr(91); # [
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\'(\'
+  push(@iparam, chr(40)); # %\'(\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%d\', pop(@iparam)); # %d
   $rc .= chr(109); # m
@@ -24974,7 +24974,7 @@ sub {
              { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
              pop(@iparam);
            }) { # %t
-      push(@iparam, chr(128)); # %\'z\'
+      push(@iparam, chr(122)); # %\'z\'
     }
     else { # %e
       if (do { # %?
@@ -24983,7 +24983,7 @@ sub {
                { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
                pop(@iparam);
              }) { # %t
-        push(@iparam, chr(128)); # %\'G\'
+        push(@iparam, chr(71)); # %\'G\'
       }
       else { # %e
         if (do { # %?
@@ -24992,34 +24992,34 @@ sub {
                  { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
                  pop(@iparam);
                }) { # %t
-          push(@iparam, chr(128)); # %\'p\'
+          push(@iparam, chr(112)); # %\'p\'
         }
         else { # %e
           if (do { # %?
                    push(@iparam, $param[0]); # %p1
-                   push(@iparam, chr(128)); # %\'#\'
+                   push(@iparam, chr(35)); # %\'#\'
                    { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
                    pop(@iparam);
                  }) { # %t
-            push(@iparam, chr(128)); # %\'E\'
+            push(@iparam, chr(69)); # %\'E\'
           }
           else { # %e
             if (do { # %?
                      push(@iparam, $param[0]); # %p1
-                     push(@iparam, chr(128)); # %\'%\'
+                     push(@iparam, chr(37)); # %\'%\'
                      { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
                      pop(@iparam);
                    }) { # %t
-              push(@iparam, chr(128)); # %\'f\'
+              push(@iparam, chr(102)); # %\'f\'
             }
             else { # %e
               if (do { # %?
                        push(@iparam, $param[0]); # %p1
-                       push(@iparam, chr(128)); # %\'/\'
+                       push(@iparam, chr(47)); # %\'/\'
                        { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
                        pop(@iparam);
                      }) { # %t
-                push(@iparam, chr(128)); # %\'C\'
+                push(@iparam, chr(67)); # %\'C\'
               }
               else { # %e
                 push(@iparam, 92); # %{92}
@@ -31803,12 +31803,12 @@ sub {
   $rc .= chr(91); # [
   $rc .= chr(51); # 3
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\'0\'
+  push(@iparam, chr(48)); # %\'0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $dynamicp->[0] = pop(@iparam); # %Pa
   if (do { # %?
            push(@iparam, $dynamicp->[0]); # %ga
-           push(@iparam, chr(128)); # %\'0\'
+           push(@iparam, chr(48)); # %\'0\'
            { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
            pop(@iparam);
          }) { # %t
@@ -31816,7 +31816,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'1\'
+              push(@iparam, chr(49)); # %\'1\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -31824,7 +31824,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'2\'
+              push(@iparam, chr(50)); # %\'2\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -31832,7 +31832,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'3\'
+              push(@iparam, chr(51)); # %\'3\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -31840,7 +31840,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'4\'
+              push(@iparam, chr(52)); # %\'4\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -31848,7 +31848,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'5\'
+              push(@iparam, chr(53)); # %\'5\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -31856,7 +31856,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'6\'
+              push(@iparam, chr(54)); # %\'6\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -37318,11 +37318,11 @@ sub {
            push(@iparam, $param[8]); # %p9
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'\\016\'
+    push(@iparam, chr(14)); # %\'\\016\'
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
   else { # %e
-    push(@iparam, chr(128)); # %\'\\017\'
+    push(@iparam, chr(15)); # %\'\\017\'
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   } # %;
 
@@ -49207,7 +49207,7 @@ sub {
            { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x > $y); } # %>
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'F\'
+    push(@iparam, chr(70)); # %\'F\'
     push(@iparam, $param[0]); # %p1
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%d\', pop(@iparam)); # %d
@@ -61633,12 +61633,12 @@ sub {
   $rc .= chr(91); # [
   $rc .= chr(52); # 4
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\'0\'
+  push(@iparam, chr(48)); # %\'0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $dynamicp->[0] = pop(@iparam); # %Pa
   if (do { # %?
            push(@iparam, $dynamicp->[0]); # %ga
-           push(@iparam, chr(128)); # %\'0\'
+           push(@iparam, chr(48)); # %\'0\'
            { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
            pop(@iparam);
          }) { # %t
@@ -61646,7 +61646,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'1\'
+              push(@iparam, chr(49)); # %\'1\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -61654,7 +61654,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'2\'
+              push(@iparam, chr(50)); # %\'2\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -61662,7 +61662,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'3\'
+              push(@iparam, chr(51)); # %\'3\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -61670,7 +61670,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'4\'
+              push(@iparam, chr(52)); # %\'4\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -61678,7 +61678,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'5\'
+              push(@iparam, chr(53)); # %\'5\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -61686,7 +61686,7 @@ sub {
   }
   elsif (do { # %e
               push(@iparam, $dynamicp->[0]); # %ga
-              push(@iparam, chr(128)); # %\'6\'
+              push(@iparam, chr(54)); # %\'6\'
               { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x == $y); } # %=
               pop(@iparam);
          }) { # %t
@@ -72852,11 +72852,11 @@ sub {
   $rc .= chr(27); # \\E
   $rc .= chr(89); # Y
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\' \'
+  push(@iparam, chr(32)); # %\' \'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[1]); # %p2
-  push(@iparam, chr(128)); # %\' \'
+  push(@iparam, chr(32)); # %\' \'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
 
@@ -80387,7 +80387,7 @@ sub {
     push(@iparam, $param[0]); # %p1
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80414,7 +80414,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80435,7 +80435,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80462,7 +80462,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80483,7 +80483,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80510,7 +80510,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -80531,7 +80531,7 @@ sub {
     push(@iparam, $dynamicp->[23]); # %gx
     push(@iparam, 10); # %{10}
     { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x - $y); } # %-
-    push(@iparam, chr(128)); # %\'a\'
+    push(@iparam, chr(97)); # %\'a\'
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   }
@@ -84924,7 +84924,7 @@ sub {
            { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x > $y); } # %>
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'2\'
+    push(@iparam, chr(50)); # %\'2\'
     push(@iparam, $param[0]); # %p1
     push(@iparam, pop(@iparam) + pop(@iparam)); # %+
     $rc .= sprintf(\'%d\', pop(@iparam)); # %d
@@ -90972,11 +90972,11 @@ sub {
   $rc .= chr(27); # \\E
   $rc .= chr(61); # =
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(128)); # %\' \'
+  push(@iparam, chr(32)); # %\' \'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[1]); # %p2
-  push(@iparam, chr(128)); # %\' \'
+  push(@iparam, chr(32)); # %\' \'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
 
@@ -120480,40 +120480,40 @@ sub {
 
   $rc .= chr(27); # \\E
   $rc .= chr(91); # [
-  push(@iparam, chr(128)); # %\'0\'
+  push(@iparam, chr(48)); # %\'0\'
   if (do { # %?
            push(@iparam, $param[0]); # %p1
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'8\'
+    push(@iparam, chr(56)); # %\'8\'
     push(@iparam, pop(@iparam) | pop(@iparam)); # %|
   } # %;
   if (do { # %?
            push(@iparam, $param[1]); # %p2
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'8\'
+    push(@iparam, chr(56)); # %\'8\'
     push(@iparam, pop(@iparam) | pop(@iparam)); # %|
   } # %;
   if (do { # %?
            push(@iparam, $param[2]); # %p3
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'4\'
+    push(@iparam, chr(52)); # %\'4\'
     push(@iparam, pop(@iparam) | pop(@iparam)); # %|
   } # %;
   if (do { # %?
            push(@iparam, $param[3]); # %p4
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'2\'
+    push(@iparam, chr(50)); # %\'2\'
     push(@iparam, pop(@iparam) | pop(@iparam)); # %|
   } # %;
   if (do { # %?
            push(@iparam, $param[6]); # %p7
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(128)); # %\'1\'
+    push(@iparam, chr(49)); # %\'1\'
     push(@iparam, pop(@iparam) | pop(@iparam)); # %|
   } # %;
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c

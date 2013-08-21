@@ -370,13 +370,16 @@ sub addPushConst {
     #
     # Either this is an escaped number \ddd, or anything but a quote
     #
+    my $inside = $const;
+    substr($inside, 0, 2, '');   # Remove %' at the beginning
+    substr($inside, -1, 1, '');  # Remove ' at the end
     my $c;
-    if (length($const) > 1) {
-	my $oct = $const;
-	substr($oct, 0, 1, '');
+    if (length($inside) > 1) {   # This is \ddd
+	my $oct = $inside;
+	substr($oct, 0, 1, '');  # Remove \ at the beginning
 	$c = chr(oct($oct) || oct(200));
     } else {
-	$c = $const;
+	$c = $inside;            # This is a character
     }
 
     my $ord = ord($c);
