@@ -228,5 +228,5 @@ ES         ~ BS ES_AFTERBS
 # Following http://stackoverflow.com/questions/17773976/prevent-naive-longest-token-matching-in-marpar2scanless we
 # will always match a longer substring than the one originally wanted.
 #
-:lexeme ~ MAXMATCH pause => before event => MAXMATCH
+:lexeme ~ <MAXMATCH> pause => before event => 'MAXMATCH'
 MAXMATCH   ~ [\p{MarpaX::Database::Terminfo::Grammar::CharacterClasses::InIsPrintAndIsGraph}]+
