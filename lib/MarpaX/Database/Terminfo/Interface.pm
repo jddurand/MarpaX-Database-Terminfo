@@ -1102,7 +1102,7 @@ sub tigetflag {
 
 =head2 tvgetflag($self, $id)
 
-Search for the terminfo boolean variable $id. Return true if found, false in all other cases.
+Search for the boolean variable $id. Return true if found, false in all other cases.
 
 =cut
 
@@ -1135,7 +1135,7 @@ sub tigetnum {
 
 =head2 tvgetnum($self, $id, [$areap])
 
-Search for the terminfo numeric variable $id. If found, return true and store its value in the eventual ${$areap}, return false in all other cases.
+Search for the numeric variable $id. If found, return true and store its value in the eventual ${$areap}, return false in all other cases.
 
 =cut
 
@@ -1168,7 +1168,7 @@ sub tigetstr {
 
 =head2 tvgetstr($self, $id, [$areap])
 
-Search for the terminfo string variable $id. If found, return true and insert its value at pos()istion of eventual ${$areap}, this pos() being updated after the insert, return false in all other cases.
+Search for the string variable $id. If found, return true and insert its value at pos()istion of eventual ${$areap}, this pos() being updated after the insert, return false in all other cases.
 
 =cut
 
