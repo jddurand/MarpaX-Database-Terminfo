@@ -3,13 +3,24 @@ use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 2;
 use File::Spec;
+use Path::Tiny qw/path/;
 
+my $path;
+
+BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
+        $path =~ /(.*)/;
+        $path = $1;
+}
+
+use Test::File::ShareDir 
+    -root  =>  $path,
+    -share =>  {
+	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir }, 
+	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
+};
+#------------------------------------------------------
 BEGIN {
-    push(@INC, 'inc');
     use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:functions/ ) || print "Bail out!\n";
-    $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
-    $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
-    $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
 }
 my $t = MarpaX::Database::Terminfo::Interface->new({use_env => 0});
 $t->tgetent('dumb');

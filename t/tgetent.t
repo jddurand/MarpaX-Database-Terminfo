@@ -3,14 +3,25 @@ use strict;
 use warnings FATAL => 'all';
 use Test::More;
 use File::Spec;
+use Path::Tiny qw/path/;
 
+my $path;
+
+BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
+        $path =~ /(.*)/;
+        $path = $1;
+}
+
+use Test::File::ShareDir 
+    -root  =>  $path,
+    -share =>  {
+	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir }, 
+	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
+};
+#------------------------------------------------------
 my $number_of_tests_run = 1;
 BEGIN {
-    push(@INC, 'inc');
     use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:all/ ) || print "Bail out!\n";
-    $ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
-    $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
-    $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
 }
 #
 # Test all terminals in the ncurses database
