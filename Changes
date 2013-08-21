@@ -1,7 +1,84 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.005 2013-08-11T22:33:53
+0.006 2013-08-21T10:32:01
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Marpa::R2 DSL compliance
+ - In POD, "terminfo x variable" -> "x variable"
+ - POD typo
+ - tvxxx test suite
+ - $self->tvxxxx normalisation: always returns true if found, false if not
+   found
+ - Preparation for use_env
+ - addPercentToRc: add a missing comment in generated code
+ - Fix error in addPushConst
+ - Fix indentation
+ - Removed unused method _doIndent
+ - _get_ospeed_and_baudrate environment variables fix
+ - A little better _get_ospeed_and_baudrate()
+ - use_env
+ - xtest compliance
+ - putp
+ - xtest compliance
+ - bsd_tputs, tputs fixes
+ - POD fixes, inversion of tgoto() arguments
+ - main_module is lib/MarpaX/Database/Terminfo/Interface.pm
+ - Fix indices on staticp and dynamicp
+ - renamed
+ - test the pure txt version of stubs
+ - rename
+ - xtest compliance
+ - More eval and failover
+ - xtest compliance and two ## no critic for eval
+ - xtest compliance
+ - Fix in untained mode, removed $log statements from stubs
+ - Removed $log statement
+ - A lot of stuff about stubs
+ - use pre computed stubs
+ - use pre computed stubs
+ - xtest compliance
+ - new stopwords
+ - stubs generation and shared files
+ - Use our parsing technique instead of perl version of GNU ncurses
+ - Order the tests by alias
+ - Use the real escape character
+ - Octal characters and not integer, debugf to tracef
+ - Octal characters and not integer
+ - String grammar and actions
+ - Character constants
+ - Doc touch up
+ - xtest compliance
+ - tparm and al.
+ - Moving from Class::Singleton to classic OO
+ - tgetstr and tigetstr compliance with the standard
+ - Try to change author so that I do not appear also as author and
+   contributor
+ - xtest compliance
+ - tiget family
+ - Allow internal routine _tget() to look into terminfo, termcap or
+   variable via a parameter, preparation for tgoto and al.
+ - Document that termcap and variable entries are automatically derived
+   using the caps parameter of _new_instance()
+ - Optional filehandle to POSIX::Termios::getattr()
+ - Support of $ENV{TERMINFO_BAUDRATE}
+ - Play with pos() on $areap
+ - PC, UP, BC, ospeed and baudrate initializations
+ - xtest compliance
+ - tget* interfaces
+ - Caps files
+ - {MARPAX_DATABASE_TERMINFO_BIN} and tgetent(() as exported
+ - feature in now an array
+ - feature is now an array, use terminfo constants
+ - Terminfo constants
+ - If boolean ends with '@' then it is explicitely false
+ - Add emacs backup files
+ - tgetent() prototype
+ - Value returned by Marpa is also a reference
+ - Oups, one level of reference too much
+ - POD fix
+
+0.005 2013-08-11T22:35:03
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Release of version 0.005
  - share/ncurses-terminfo.storable is build manually, letting it here but
    commented
  - Commented Run::BeforeBuild, added share/ncurses-terminfo.storable, yet

@@ -1,7 +1,7 @@
 {
-   "abstract" : "Parse a terminfo data base using Marpa",
+   "abstract" : "Terminfo interface",
    "author" : [
-      "Jean-Damien Durand <jeandamiendurand@free.fr>"
+      "jddurand <jeandamiendurand@free.fr>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Dist::Zilla version 4.300034, CPAN::Meta::Converter version 2.132140",
@@ -41,8 +41,14 @@
          "requires" : {
             "Carp" : "0",
             "Exporter" : "0",
+            "File::ShareDir" : "0",
             "Log::Any" : "0",
             "Marpa::R2" : "0",
+            "Storable" : "0",
+            "Time::HiRes" : "0",
+            "base" : "0",
+            "charnames" : "0",
+            "constant" : "0",
             "perl" : "5.010",
             "strict" : "0",
             "warnings" : "0"
@@ -52,6 +58,7 @@
          "requires" : {
             "ExtUtils::MakeMaker" : "0",
             "File::Find" : "0",
+            "File::Spec" : "0",
             "File::Spec::Functions" : "0",
             "File::Temp" : "0",
             "List::Util" : "0",
@@ -62,23 +69,43 @@
    "provides" : {
       "MarpaX::Database::Terminfo" : {
          "file" : "lib/MarpaX/Database/Terminfo.pm",
-         "version" : "0.005"
+         "version" : "0.006"
+      },
+      "MarpaX::Database::Terminfo::Constants" : {
+         "file" : "lib/MarpaX/Database/Terminfo/Constants.pm",
+         "version" : "0.006"
       },
       "MarpaX::Database::Terminfo::Grammar" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar.pm",
-         "version" : "0.005"
+         "version" : "0.006"
       },
       "MarpaX::Database::Terminfo::Grammar::Actions" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/Actions.pm",
-         "version" : "0.005"
+         "version" : "0.006"
       },
       "MarpaX::Database::Terminfo::Grammar::CharacterClasses" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/CharacterClasses.pm",
-         "version" : "0.005"
+         "version" : "0.006"
       },
       "MarpaX::Database::Terminfo::Grammar::Regexp" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/Regexp.pm",
-         "version" : "0.005"
+         "version" : "0.006"
+      },
+      "MarpaX::Database::Terminfo::Interface" : {
+         "file" : "lib/MarpaX/Database/Terminfo/Interface.pm",
+         "version" : "0.006"
+      },
+      "MarpaX::Database::Terminfo::String" : {
+         "file" : "lib/MarpaX/Database/Terminfo/String.pm",
+         "version" : "0.006"
+      },
+      "MarpaX::Database::Terminfo::String::Grammar" : {
+         "file" : "lib/MarpaX/Database/Terminfo/String/Grammar.pm",
+         "version" : "0.006"
+      },
+      "MarpaX::Database::Terminfo::String::Grammar::Actions" : {
+         "file" : "lib/MarpaX/Database/Terminfo/String/Grammar/Actions.pm",
+         "version" : "0.006"
       }
    },
    "release_status" : "stable",
@@ -94,9 +121,9 @@
          "web" : "https://github.com/jddurand/marpax-database-terminfo"
       }
    },
-   "version" : "0.005",
+   "version" : "0.006",
    "x_contributors" : [
-      "jddurand <jeandamiendurand@free.fr>"
+      "Jean-Damien Durand <jeandamiendurand@free.fr>"
    ]
 }
 

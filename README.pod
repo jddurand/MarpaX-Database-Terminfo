@@ -4,17 +4,15 @@
 
 =head1 NAME
 
-MarpaX::Database::Terminfo - Parse a terminfo data base using Marpa
+MarpaX::Database::Terminfo::Interface - Terminfo interface
 
 =head1 VERSION
 
-version 0.005
+version 0.006
 
 =head1 SYNOPSIS
 
-    use strict;
-    use warnings FATAL => 'all';
-    use MarpaX::Database::Terminfo;
+    use MarpaX::Database::Terminfo::Interface qw/:all/;
     use Log::Log4perl qw/:easy/;
     use Log::Any::Adapter;
     use Log::Any qw/$log/;
@@ -30,38 +28,168 @@ version 0.005
     ';
     Log::Log4perl::init(\$defaultLog4perlConf);
     Log::Any::Adapter->set('Log4perl');
-    #
-    # Parse terminfo
-    #
-    my $terminfoSourceCode = "ansi|ansi/pc-term compatible with color,\n\tmc5i,\n";
-    my $terminfoAstObject = MarpaX::Database::Terminfo->new();
-    $terminfoAstObject->parse(\$terminfoSourceCode)->value;
+
+    tgetent('ansi');
 
 =head1 DESCRIPTION
 
-This module parses a terminfo database and produces an AST from it. If you want to enable logging, be aware that this module is a Log::Any thingy.
-
-The grammar is a slightly revisited version of the one found at L<http://nixdoc.net/man-pages/HP-UX/man4/terminfo.4.html#Formal%20Grammar>, taking into account ncurses compatibility.
+This modules implements a terminfo X/open-compliant interface.
 
 =head1 SUBROUTINES/METHODS
 
-=head2 new($class)
+=head2 new($class, $opts)
 
-Instantiate a new object. Takes no parameter.
+Instance an object. An optional $opt is a reference to a hash:
 
-=head2 parse($self, $bufferp)
+=over
 
-Parses a terminfo database. Takes a pointer to a string as parameter.
+=item $opts->{file} or $ENV{MARPAX_DATABASE_TERMINFO_FILE}
 
-=head2 value($self)
+a file path to the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the following txt key/value.
 
-Returns Marpa value on the parse tree. Ambiguous parse tree result is disabled and the module will croak if this happen.
+=item $opts->{txt} or $ENV{MARPAX_DATABASE_TERMINFO_TXT}
+
+a text version of the terminfo database. This module will then parse it using Marpa. If set to any true value, this setting has precedence over the following bin key/value.
+
+=item $opts->{bin} or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
+
+a path to a binary version of the terminfo database, created using Storable module. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
+
+=item $opts->{caps} or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
+
+a path to a text version of the terminfo<->termcap translation. This module is distributed with GNU ncurses translation files, namely: ncurses-Caps (default), ncurses-Caps.aix4 (default on AIX), ncurses-Caps.hpux11 (default on HP/UX), ncurses-Caps.keys, ncurses-Caps.osf1r5 (default on OSF1) and ncurses-Caps.uwin.
+
+=item $opts->{cache_stubs} or $ENV{MARPAX_DATABASE_TERMINFO_CACHE_STUBS}
+
+a flag saying if the compiled stubs of string features value should be cached or not. Each time a terminfo entry is loaded using tgetent(), every string feature is parsed using Marpa. If this is a true value, when another terminfo is loaded, there is no need to reparse a string feature value already parsed. Default is true.
+
+=item $opts->{cache_stubs_as_txt} or $ENV{MARPAX_DATABASE_TERMINFO_CACHE_STUBS_AS_TXT}
+
+a flag saying if the string versions (i.e. not compiled) stubs of string features value should be cached or not. Each time a terminfo entry is loaded using tgetent(), every string feature is parsed using Marpa. If this is a true value, when another terminfo is loaded, there is no need to reparse a string feature value already parsed. Default is true.
+
+=item $opts->{stubs_txt} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT}
+
+a path to a text version of the terminfo<->stubs translation, created using Data::Dumper. The content of this file is the text version of all stubs, that will be compiled if needed. This option is used only if cache_stubs is on. If set to any true value, this setting has precedence over the following bin key/value. Mostly useful for debugging or readability: the created stubs are immediately comprehensive, and if there is a bug in them, this option could be used.
+
+=item $opts->{stubs_bin} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN}
+
+a path to a binary version of the terminfo<->stubs translation, created using Storable module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
+
+=item $opts->{bsd_tputs} or $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS}
+
+Specific to ancient BSD programs, like nethack, that likes to get systematic delays. Default is false.
+
+=item $opts->{use_env} or $ENV{MARPAX_DATABASE_TERMINFO_USE_ENV}
+
+Initial value of use_env boolean, saying if lines and columns specified in terminfo are used or not. Default value is true. Please refer to the use_env() method.
+
+=back
+
+Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
+
+=head2 _terminfo_db($self)
+
+Internal function. Returns the raw database, in the form of an array of hashes.
+
+=head2 _terminfo_current($self)
+
+Internal function. Returns the current terminfo entry.
+
+=head2 _t2other($self)
+
+Internal function. Returns the terminfo->termcap translation hash.
+
+=head2 _c2other($self)
+
+Internal function. Returns the terminfo->termcap translation hash.
+
+=head2 _capalias($self)
+
+Internal function. Returns the termcap aliases.
+
+=head2 _infoalias($self)
+
+Internal function. Returns the termcap aliases.
+
+=head2 _terminfo_init($self)
+
+Internal function. Initialize if needed and if possible the current terminfo. Returns a pointer to the current terminfo entry.
+
+=head2 flush($self, $cb, @args);
+
+Defines a flush callback function $cb with optional @arguments. Such callback is used in some case like a delay. If called as $self->flush(), returns undef or a reference to an array containing [$cb, @args].
+
+=head2 tgetent($self, $name[, $fh])
+
+Loads the entry for $name. Returns 1 on success, 0 if no entry, -1 if the terminfo database could not be found. This function will warn if the database has a problem. $name must be an alias in the terminfo database. If multiple entries have the same alias, the first that matches is taken. The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively. The variable ospeed is set in a system-specific coding to reflect the terminal speed, or $ENV{MARPAX_DATABASE_TERMINFO_OSPEED} if defined, otherwise we attempt to get the value using POSIX interface, or "13". ospeed should be a value between 0 and 15, or 4097 and 4105, or 4107 and 4111. The variable baudrate can be $ENV{MARPAX_DATABASE_TERMINFO_BAUDRATE} (unchecked! i.e. at your own risk) or is derived from ospeed, or "9600". $fh is an optional opened filehandle, used to guess about baudrate and ospeed. Defaults to fileno(\*STDIN) or 0. When loading a terminfo, termcap and variable entries are automatically derived using the caps parameter as documented in _new_instance().
+
+=head2 delay($self, $ms)
+
+Do a delay of $ms milliseconds when producing the output. If the current terminfo variable no_pad_char is true, or if there is no PC variable, do a system sleep. Otherwise use the PC variable as many times as necessary followed by a flush callback. Do nothing if outside of a "producing output" context (i.e. tputs(), etc...). Please note that delay by itself in the string is not recognized as a grammar lexeme. This is tputs() that is seeing the delay.
+
+=head2 tgetflag($self, $id)
+
+Gets the boolean value for termcap entry $id, or 0 if not available. Only the first two characters of the id parameter are compared in lookups.
+
+=head2 tigetflag($self, $id)
+
+Gets the boolean value for terminfo entry $id. Returns the value -1 if $id is not a boolean capability, or 0 if it is canceled or absent from the terminal description.
+
+=head2 tvgetflag($self, $id)
+
+Search for the boolean variable $id. Return true if found, false in all other cases.
+
+=head2 tgetnum($self, $id)
+
+Stores the numeric value for termcap entry $id, or -1 if not available. Only the first two characters of the id parameter are compared in lookups.
+
+=head2 tigetnum($self, $id)
+
+Gets the numeric value for terminfo entry $id. Returns the value -2 if $id is not a numeric capability, or -1 if it is canceled or absent from the terminal description.
+
+=head2 tvgetnum($self, $id, [$areap])
+
+Search for the numeric variable $id. If found, return true and store its value in the eventual ${$areap}, return false in all other cases.
+
+=head2 tgetstr($self, $id, [$areap])
+
+Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined and is a reference: if $id is a string then the found value is inserted at current pos()isition in ${$areap} and pos()isition is updated, otherwise (i.e. boolean and numeric cases) ${$areap} is overwritten with the found value. Only the first two characters of the id parameter are compared in lookups.
+
+=head2 tigetstr($self, $id)
+
+Returns a reference to terminfo string entry for $id, or -1 if $id is not a string capabilitty, or 0 it is canceled or absent from terminal description.
+
+=head2 tvgetstr($self, $id, [$areap])
+
+Search for the string variable $id. If found, return true and insert its value at pos()istion of eventual ${$areap}, this pos() being updated after the insert, return false in all other cases.
+
+=head2 tputs($self, $str, $affcnt, $outc, @outcArgs)
+
+Applies padding information to the string $str and outputs it. The $str must be a terminfo string variable or the return value from tparm(), tgetstr(), or tgoto(). $affcnt is the number of lines affected, or 1 if not applicable. $outc is a putchar-like routine to which the characters are passed, one at a time, as first argument, and @outcArgs as remaining arguments.
+
+=head2 putp($self, $str)
+
+Calls $self->tputs($str, 1, sub {print STDOUT shift}). Note that the output of putp always goes to stdout, not to the fildes specified in setupterm..
+
+=head2 tparm($self, $string, @param)
+
+Instantiates the string $string with parameters @param. Returns the string with the parameters applied.
+
+=head2 tgoto($self, $string, $col, $row)
+
+Instantiates the parameters into the given capability. The output from this routine is to be passed to tputs.
+
+=head2 use_env($self[, $boolean])
+
+Returns or set the use_env boolean. $boolean can be anything, this is internally convert to either 0 or 1.
 
 =head1 SEE ALSO
 
 L<Unix Documentation Project - terminfo|http://nixdoc.net/man-pages/HP-UX/man4/terminfo.4.html#Formal%20Grammar>
 
 L<GNU Ncurses|http://www.gnu.org/software/ncurses/>
+
+L<Marpa::R2|http://metacpan.org/release/Marpa-R2>
 
 =for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
@@ -84,11 +212,11 @@ L<https://github.com/jddurand/marpax-database-terminfo>
 
 =head1 AUTHOR
 
-Jean-Damien Durand <jeandamiendurand@free.fr>
+jddurand <jeandamiendurand@free.fr>
 
 =head1 CONTRIBUTOR
 
-jddurand <jeandamiendurand@free.fr>
+Jean-Damien Durand <jeandamiendurand@free.fr>
 
 =head1 COPYRIGHT AND LICENSE
 
