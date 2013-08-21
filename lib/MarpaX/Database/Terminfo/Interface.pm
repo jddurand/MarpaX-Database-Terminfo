@@ -1146,7 +1146,7 @@ sub tvgetnum {
 
 =head2 tgetstr($self, $id, [$areap])
 
-Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined and is a reference: if $id is a string then the found value is inserted at current pos()isition in ${$areap} and pos()isition is updated, otherwise (i.e. boolean and numeric cases) ${$areap} is overwriten with the found value. Only the first two characters of the id parameter are compared in lookups.
+Returns a reference to termcap string entry for $id, or zero if it is not available. If $areap is defined and is a reference: if $id is a string then the found value is inserted at current pos()isition in ${$areap} and pos()isition is updated, otherwise (i.e. boolean and numeric cases) ${$areap} is overwritten with the found value. Only the first two characters of the id parameter are compared in lookups.
 
 =cut
 
