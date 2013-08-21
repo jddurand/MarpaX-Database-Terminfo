@@ -203,7 +203,7 @@ sub addPercentToRc {
 	$log->tracef('addPercentToRc(c="%s")', $c);
     }
 
-    return "\$rc .= '%';";
+    return "\$rc .= '%'; # $c";
 }
 
 =head2 addPrintPopToRc($self, $c)
