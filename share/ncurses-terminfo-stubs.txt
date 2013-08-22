@@ -12380,11 +12380,11 @@ sub {
 
   $rc .= chr(oct(11)); # \\011
   push(@iparam, $param[1]); # %p2
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
 
@@ -24965,7 +24965,7 @@ sub {
            { my $y = pop(@iparam); my $x = pop(@iparam); push(@iparam, $x < $y); } # %<
            pop(@iparam);
          }) { # %t
-    push(@iparam, chr(oct(:))); # %\'\\:\'
+    push(@iparam, \':\'); # %\'\\:\'
   }
   else { # %e
     if (do { # %?
@@ -67362,19 +67362,19 @@ sub {
   $rc .= "\\e"; # \\E
   $rc .= chr(oct(16)); # \\016
   push(@iparam, $param[0]); # %p1
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[1]); # %p2
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[2]); # %p3
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   push(@iparam, $param[3]); # %p4
-  push(@iparam, chr(oct())); # %\'\\0\'
+  push(@iparam, "\\0"); # %\'\\0\'
   push(@iparam, pop(@iparam) + pop(@iparam)); # %+
   $rc .= sprintf(\'%c\', pop(@iparam)); # %c
   $rc .= chr(oct(25)); # \\025

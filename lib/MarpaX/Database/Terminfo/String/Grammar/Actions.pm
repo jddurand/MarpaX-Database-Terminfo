@@ -2,7 +2,7 @@ use strict;
 use warnings FATAL => 'all';
 
 package MarpaX::Database::Terminfo::String::Grammar::Actions;
-use Carp qw/carp/;
+use Carp qw/croak/;
 use Log::Any qw/$log/;
 
 # ABSTRACT: Terminfo grammar actions
@@ -55,21 +55,31 @@ sub addEscapedCharacterToRc {
 	$log->tracef('addEscapedCharacterToRc(c="%s")', $c);
     }
 
-    if    ($c eq '\\E' || $c eq '\\e') { return "\$rc .= \"\\e\"; # $c";  }
-    elsif ($c eq '\\a'               ) { return "\$rc .= \"\\a\"; # $c";  }
-    elsif ($c eq '\\n'               ) { return "\$rc .= \"\\n\"; # $c";  }
-    elsif ($c eq '\\l'               ) { return "\$rc .= \"\\n\"; # $c";  }
-    elsif ($c eq '\\r'               ) { return "\$rc .= \"\\r\"; # $c";  }
-    elsif ($c eq '\\b'               ) { return "\$rc .= \"\\b\"; # $c";  }
-    elsif ($c eq '\\f'               ) { return "\$rc .= \"\\f\"; # $c";  }
-    elsif ($c eq '\\t'               ) { return "\$rc .= \"\\t\"; # $c";  }
-    elsif ($c eq '\\s'               ) { return "\$rc .= ' '; # $c";      }
-    elsif ($c eq '\\^'               ) { return "\$rc .= '^'; # $c";      }
-    elsif ($c eq '\\\\'              ) { return "\$rc .= '\\\\'; # $c";   }
-    elsif ($c eq '\\,'               ) { return "\$rc .= ','; # $c";      }
-    elsif ($c eq '\\:'               ) { return "\$rc .= ':'; # $c";      }
+    return "\$rc .= " . $self->_escapedCharacter($c) . "; # $c";
+}
+
+sub _escapedCharacter {
+    my ($self, $c) = @_;
+
+    if ($log->is_trace) {
+	$log->tracef('_escapedCharacter(c="%s")', $c);
+    }
+
+    if    ($c eq '\\E' || $c eq '\\e') { return "\"\\e\"";  }
+    elsif ($c eq '\\a'               ) { return "\"\\a\"";  }
+    elsif ($c eq '\\n'               ) { return "\"\\n\"";  }
+    elsif ($c eq '\\l'               ) { return "\"\\n\"";  }
+    elsif ($c eq '\\r'               ) { return "\"\\r\"";  }
+    elsif ($c eq '\\b'               ) { return "\"\\b\"";  }
+    elsif ($c eq '\\f'               ) { return "\"\\f\"";  }
+    elsif ($c eq '\\t'               ) { return "\"\\t\"";  }
+    elsif ($c eq '\\s'               ) { return "' '";      }
+    elsif ($c eq '\\^'               ) { return "'^'";      }
+    elsif ($c eq '\\\\'              ) { return "'\\\\'";   }
+    elsif ($c eq '\\,'               ) { return "','";      }
+    elsif ($c eq '\\:'               ) { return "':'";      }
     # In perl \0 is not the end of a string
-    elsif ($c eq '\\0'               ) { return "\$rc .= \"\\0\"; # $c"; }
+    elsif ($c eq '\\0'               ) { return "\"\\0\""; }
 
     elsif (substr($c, 0, 1) eq '^') {
 	#
@@ -81,9 +91,9 @@ sub addEscapedCharacterToRc {
 	my $this = $c;
 	substr($this, 0, 1, '');
 	if ($this eq '\\') {
-	    return "\$rc .= \"\\c\\X\"; substr(\$rc, -1, 1, ''); # $c";
+	    return "\"\\c\\X\"; substr(\$rc, -1, 1, '')";
 	} else {
-	    return "\$rc .= \"\\c$this\"; # $c";
+	    return "\"\\c$this\"";
 	}
     }
     elsif (substr($c, 0, 1) eq '\\') {
@@ -94,10 +104,10 @@ sub addEscapedCharacterToRc {
 	substr($oct, 0, 1, '');
 	$oct =~ s/^0*//;          # Take care... oct(012) == oct(12) = 10 ...
 	# Note: in perl \0 is NOT the end of a string
-	return "\$rc .= chr(oct($oct)); # $c";
+	return "chr(oct($oct))";
     }
     else {
-	carp "Unhandled escape sequence $c\n";
+	croak "Unhandled escape sequence $c\n";
     }
 }
 
@@ -302,12 +312,9 @@ sub addPushConst {
     my $inside = $const;
     substr($inside, 0, 2, '');   # Remove %' at the beginning
     substr($inside, -1, 1, '');  # Remove ' at the end
-    if (length($inside) > 1) {   # This is \ddd
-	my $oct = $inside;
-	substr($oct, 0, 1, '');  # Remove \ at the beginning
-	$oct =~ s/^0*//;      # Take care... oct(012) == oct(12) = 10 ...
-	# In perl \0 is not the end of a string
-	return "push(\@iparam, chr(oct($oct))); # $const";
+
+    if (substr($inside, 0, 1) eq '\\') {
+	return "push(\@iparam, " . $self->_escapedCharacter($inside) . "); # $const";
     } else {
 	return "push(\@iparam, \"" . quotemeta($inside) . "\"); # $const";
     }
