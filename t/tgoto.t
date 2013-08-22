@@ -32,4 +32,4 @@ my $cmp = $t->tgetstr('cm');
 #
 # Note: arguments are column and row
 #
-is ($t->tgoto(${$cmp}, 40, 18), "\N{ESC}[19;41H", 'ibcs2 cursor_adress');
+is ($t->tgoto(${$cmp}, 40, 18), "\N{ESCAPE}[19;41H", 'ibcs2 cursor_adress');

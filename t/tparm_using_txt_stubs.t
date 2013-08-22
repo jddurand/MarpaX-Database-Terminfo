@@ -30,4 +30,4 @@ $t->tgetent('ibcs2');
 # cup is the cursor adress
 #
 my $cupp = $t->tigetstr('cup');
-is ($t->tparm(${$cupp}, 18, 40), "\N{ESC}[19;41H", "ibcs2 cursor_adress '${$cupp}' with parameters (18, 40)");
+is ($t->tparm(${$cupp}, 18, 40), "\N{ESCAPE}[19;41H", "ibcs2 cursor_adress '${$cupp}' with parameters (18, 40)");
