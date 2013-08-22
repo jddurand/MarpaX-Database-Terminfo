@@ -3,7 +3,6 @@ use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 2;
 use File::Spec;
-use charnames ':full';
 use Path::Tiny qw/path/;
 
 my $path;
@@ -28,8 +27,8 @@ $t->tgetent('ibcs2');
 #
 # cm is the cursor adress
 #
-my $cmp = $t->tgetstr('cm');
+my $cmp = $t->tgetstr('cm'); # termcap cm == terminfo cup
 #
 # Note: arguments are column and row
 #
-is ($t->tgoto(${$cmp}, 40, 18), "\N{ESCAPE}[19;41H", 'ibcs2 cursor_adress');
+is ($t->tgoto(${$cmp}, 40, 18), "\e[19;41H", 'ibcs2 cursor_adress');

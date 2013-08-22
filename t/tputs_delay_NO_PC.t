@@ -2,7 +2,6 @@
 use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 2;
-use charnames ':full';
 use File::Spec;
 use Path::Tiny qw/path/;
 
@@ -28,9 +27,9 @@ $t->tgetent('ibcs2');
 #
 # cup is the cursor adress
 #
-my $cupp = $t->tigetstr('cup');
+my $cupp = $t->tigetstr('cup'); # \E[%i%p1%d;%p2%dH
 my $got = '';
-my $wanted = chr(27) . chr(91) . chr(49) . chr(57) . chr(59) . chr(52) . chr(49) . chr(72) . chr(0);
+my $wanted = "\e" . chr(91) . chr(49) . chr(57) . chr(59) . chr(52) . chr(49) . chr(72) . chr(0);
 $t->tputs($t->tgoto(${$cupp} . '$<1000>', 40, 18), 1, \&outc);
 is($got, $wanted, 'cup at 18:40 under terminal ibcs2 that have no pad_char');
 
