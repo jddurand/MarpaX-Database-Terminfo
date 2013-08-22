@@ -20,6 +20,7 @@ use Test::File::ShareDir
 };
 #------------------------------------------------------
 BEGIN {
+    $ENV{MARPAX_DATABASE_TERMINFO_OSPEED} = 13;
     use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:all/ ) || print "Bail out!\n";
 }
 my $t = MarpaX::Database::Terminfo::Interface->new();
@@ -29,7 +30,7 @@ $t->tgetent('dm2500');
 #
 my $cupp = $t->tigetstr('cup'); # \014%p2%{96}%^%c%p1%{96}%^%c
 my $got = '';
-my $wanted = chr(oct(14)) . chr(72) . chr(114) . chr(255) . chr(255) . chr(255) . chr(255) . chr(255) . chr(0);
+my $wanted = chr(oct(14)) . chr(72) . chr(114) . chr(255) . chr(0);
 $t->tputs($t->tgoto(${$cupp} . '$<1>', 40, 18), 1, \&outc);
 is($got, $wanted, 'cup at 18:40 under terminal dm2500 that have pad_char');
 
