@@ -1,7 +1,17 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.008 2013-08-22T08:56:42
+0.009 2013-08-22T21:34:03
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Fix for escaped characters within constants
+ - Update using real perl chars
+ - Survey of new distrib via cpan testers log.txt
+ - Suppression of charnames, generate code using real perl chars, because
+   perl already knows -;
+ - script/*pl exclude from distribution
+
+0.008 2013-08-22T08:58:46
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Release of version 0.008
  - use full NAME instead of alias in charname
  - char2charname.pl
 
