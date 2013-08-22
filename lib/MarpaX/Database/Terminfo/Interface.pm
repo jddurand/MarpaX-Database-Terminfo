@@ -1062,7 +1062,7 @@ sub delay {
 	    #
 	    my $baudrate;
 	    $self->tvgetnum('baudrate', \$baudrate);
-	    my $nullcount = ($ms * $baudrate) / (BAUDBYTE * 1000);
+	    my $nullcount = int(($ms * $baudrate) / (BAUDBYTE * 1000));
 	    #
 	    # We have no interface to 'tack' program, so no need to have a global for _nulls_sent
 	    #
