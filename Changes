@@ -1,7 +1,13 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.009 2013-08-22T21:34:03
+0.010 2013-08-22T22:13:40
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Make sure nullcount is an integer
+ - t/tputs_delay_PC.t needs a fixed ospeed for a successful test
+
+0.009 2013-08-22T21:35:13
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Release of version 0.009
  - Fix for escaped characters within constants
  - Update using real perl chars
  - Survey of new distrib via cpan testers log.txt
