@@ -71,43 +71,43 @@
    "provides" : {
       "MarpaX::Database::Terminfo" : {
          "file" : "lib/MarpaX/Database/Terminfo.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Constants" : {
          "file" : "lib/MarpaX/Database/Terminfo/Constants.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Grammar" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Grammar::Actions" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/Actions.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Grammar::CharacterClasses" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/CharacterClasses.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Grammar::Regexp" : {
          "file" : "lib/MarpaX/Database/Terminfo/Grammar/Regexp.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::Interface" : {
          "file" : "lib/MarpaX/Database/Terminfo/Interface.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::String" : {
          "file" : "lib/MarpaX/Database/Terminfo/String.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::String::Grammar" : {
          "file" : "lib/MarpaX/Database/Terminfo/String/Grammar.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       },
       "MarpaX::Database::Terminfo::String::Grammar::Actions" : {
          "file" : "lib/MarpaX/Database/Terminfo/String/Grammar/Actions.pm",
-         "version" : "0.007"
+         "version" : "0.008"
       }
    },
    "release_status" : "stable",
@@ -123,7 +123,7 @@
          "web" : "https://github.com/jddurand/marpax-database-terminfo"
       }
    },
-   "version" : "0.007",
+   "version" : "0.008",
    "x_contributors" : [
       "Jean-Damien Durand <jeandamiendurand@free.fr>"
    ]

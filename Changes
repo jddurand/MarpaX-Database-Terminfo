@@ -1,7 +1,13 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.007 2013-08-21T21:56:18
+0.008 2013-08-22T08:56:42
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - use full NAME instead of alias in charname
+ - char2charname.pl
+
+0.007 2013-08-21T21:58:30
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Release of version 0.007
  - xtest compliance
  - use Test::File::ShareDir
  - POD fix
