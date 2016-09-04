@@ -15,8 +15,8 @@ BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
 use Test::File::ShareDir
     -root  =>  $path,
     -share =>  {
-	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
-	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
+        -module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
+        -dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
 };
 #------------------------------------------------------
 BEGIN {
@@ -36,8 +36,8 @@ is($got, $wanted, 'cup at 18:40 under terminal ibcs2 that have no pad_char');
 sub outc {
     my ($c) = @_;
     if ($c) {
-	$got .= $c;
+        $got .= $c;
     } else {
-	$got .= chr(0);
+        $got .= chr(0);
     }
 }

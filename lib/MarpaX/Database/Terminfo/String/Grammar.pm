@@ -37,8 +37,8 @@ sub new {
 
     $self->{_content} = $GRAMMAR_CONTENT;
     $self->{_grammar_option} = {
-	action_object  => sprintf('%s::%s', __PACKAGE__, 'Actions'),
-	source => \$self->{_content}
+        action_object  => sprintf('%s::%s', __PACKAGE__, 'Actions'),
+        source => \$self->{_content}
     };
     $self->{_recce_option} = {};
 

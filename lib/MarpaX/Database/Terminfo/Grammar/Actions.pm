@@ -61,7 +61,7 @@ sub _getTerminfo {
     my ($self) = @_;
 
     if (! defined($self->{_terminfo}->[-1])) {
-	$self->{_terminfo}->[-1] = {alias => [], longname => '', feature => []};
+        $self->{_terminfo}->[-1] = {alias => [], longname => '', feature => []};
     }
     return $self->{_terminfo}->[-1];
 }
@@ -72,9 +72,9 @@ sub _pushFeature {
     my $terminfo = $self->_getTerminfo;
 
     foreach (@{$terminfo->{feature}}) {
-	if ($_->{name} eq $name) {
-	    $log->warnf('%s %s: feature %s overwriten', $terminfo->{alias} || [], $terminfo->{longname} || '', $name);
-	}
+        if ($_->{name} eq $name) {
+            $log->warnf('%s %s: feature %s overwriten', $terminfo->{alias} || [], $terminfo->{longname} || '', $name);
+        }
     }
 
     push(@{$terminfo->{feature}}, {type => $type, name => $name, value => $value});

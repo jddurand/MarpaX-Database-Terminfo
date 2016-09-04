@@ -15,8 +15,8 @@ BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
 use Test::File::ShareDir
     -root  =>  $path,
     -share =>  {
-	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
-	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
+        -module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
+        -dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
 };
 #------------------------------------------------------
 my $number_of_tests_run = 1;
@@ -30,7 +30,7 @@ my $t = MarpaX::Database::Terminfo::Interface->new();
 my %alias = ();
 foreach (@{$t->_terminfo_db}) {
     foreach (@{$_->{alias}}) {
-	++$alias{$_};
+        ++$alias{$_};
     }
 }
 foreach (sort keys %alias) {

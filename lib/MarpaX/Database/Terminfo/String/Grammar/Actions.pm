@@ -52,7 +52,7 @@ sub addEscapedCharacterToRc {
     my ($self, $c) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addEscapedCharacterToRc(c="%s")', $c);
+        $log->tracef('addEscapedCharacterToRc(c="%s")', $c);
     }
 
     return "\$rc .= " . $self->_escapedCharacter($c) . "; # $c";
@@ -62,7 +62,7 @@ sub _escapedCharacter {
     my ($self, $c) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('_escapedCharacter(c="%s")', $c);
+        $log->tracef('_escapedCharacter(c="%s")', $c);
     }
 
     if    ($c eq '\\E' || $c eq '\\e') { return "\"\\e\"";  }
@@ -82,32 +82,32 @@ sub _escapedCharacter {
     elsif ($c eq '\\0'               ) { return "\"\\0\""; }
 
     elsif (substr($c, 0, 1) eq '^') {
-	#
-	# In perl, control-X is \cX, we support the ASCII C0 set + DEL.
-	# i.e. the range [@A-Z[\]^_?] (c.f. Marpa grammar).
-	# They can ALL be translated litteraly except \c\ that has to be
-	# writen as \c\X in perl. Then we remove the last X.
-	#
-	my $this = $c;
-	substr($this, 0, 1, '');
-	if ($this eq '\\') {
-	    return "\"\\c\\X\"; substr(\$rc, -1, 1, '')";
-	} else {
-	    return "\"\\c$this\"";
-	}
+        #
+        # In perl, control-X is \cX, we support the ASCII C0 set + DEL.
+        # i.e. the range [@A-Z[\]^_?] (c.f. Marpa grammar).
+        # They can ALL be translated litteraly except \c\ that has to be
+        # writen as \c\X in perl. Then we remove the last X.
+        #
+        my $this = $c;
+        substr($this, 0, 1, '');
+        if ($this eq '\\') {
+            return "\"\\c\\X\"; substr(\$rc, -1, 1, '')";
+        } else {
+            return "\"\\c$this\"";
+        }
     }
     elsif (substr($c, 0, 1) eq '\\') {
-	#
-	# Spec says this must be octal digits
-	#
-	my $oct = $c;
-	substr($oct, 0, 1, '');
-	$oct =~ s/^0*//;          # Take care... oct(012) == oct(12) = 10 ...
-	# Note: in perl \0 is NOT the end of a string
-	return "chr(oct($oct))";
+        #
+        # Spec says this must be octal digits
+        #
+        my $oct = $c;
+        substr($oct, 0, 1, '');
+        $oct =~ s/^0*//;          # Take care... oct(012) == oct(12) = 10 ...
+        # Note: in perl \0 is NOT the end of a string
+        return "chr(oct($oct))";
     }
     else {
-	croak "Unhandled escape sequence $c\n";
+        croak "Unhandled escape sequence $c\n";
     }
 }
 
@@ -121,7 +121,7 @@ sub addCharacterToRc {
     my ($self, $c) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addCharacterToRc(c="%s")', $c);
+        $log->tracef('addCharacterToRc(c="%s")', $c);
     }
     #
     # If we quotemeta, then we have to use double quotes
@@ -139,7 +139,7 @@ sub addPercentToRc {
     my ($self, $c) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addPercentToRc(c="%s")', $c);
+        $log->tracef('addPercentToRc(c="%s")', $c);
     }
 
     return "\$rc .= '%'; # $c";
@@ -155,7 +155,7 @@ sub addPrintPopToRc {
     my ($self, $c) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addPrintPopToRc(c="%s")', $c);
+        $log->tracef('addPrintPopToRc(c="%s")', $c);
     }
 
     return "\$rc .= sprintf('%c', pop(\@iparam)); # $c";
@@ -171,7 +171,7 @@ sub addPrintToRc {
     my ($self, $format) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addPrintToRc(format="%s")', $format);
+        $log->tracef('addPrintToRc(format="%s")', $format);
     }
 
     #
@@ -196,7 +196,7 @@ sub addPushToRc {
     # %p[1-9]
 
     if ($log->is_trace) {
-	$log->tracef('addpushToRc(push="%s")', $push);
+        $log->tracef('addpushToRc(push="%s")', $push);
     }
 
     my $indice = ord(substr($push, -1, 1)) - ord('0') - 1;
@@ -214,7 +214,7 @@ sub addDynPop {
     # %P[a-z]
 
     if ($log->is_trace) {
-	$log->tracef('addDynPop(dynpop="%s")', $dynpop);
+        $log->tracef('addDynPop(dynpop="%s")', $dynpop);
     }
 
     my $indice = ord(substr($dynpop, -1, 1)) - ord('a');
@@ -232,7 +232,7 @@ sub addDynPush {
     # %g[a-z]
 
     if ($log->is_trace) {
-	$log->tracef('addDynPush(dynpush="%s")', $dynpush);
+        $log->tracef('addDynPush(dynpush="%s")', $dynpush);
     }
 
     my $indice = ord(substr($dynpush, -1, 1)) - ord('a');
@@ -250,7 +250,7 @@ sub addStaticPop {
     # %P[A-Z]
 
     if ($log->is_trace) {
-	$log->tracef('addStaticPop(staticpop="%s")', $staticpop);
+        $log->tracef('addStaticPop(staticpop="%s")', $staticpop);
     }
 
     my $indice = ord(substr($staticpop, -1, 1)) - ord('A');
@@ -268,7 +268,7 @@ sub addStaticPush {
     # %g[A-Z]
 
     if ($log->is_trace) {
-	$log->tracef('addStaticPush(staticpush="%s")', $staticpush);
+        $log->tracef('addStaticPush(staticpush="%s")', $staticpush);
     }
 
     my $indice = ord(substr($staticpush, -1, 1)) - ord('A');
@@ -286,7 +286,7 @@ sub addL {
     # %l
 
     if ($log->is_trace) {
-	$log->tracef('addL(l="%s")', $l);
+        $log->tracef('addL(l="%s")', $l);
     }
 
     return "push(\@iparam, strlen(pop(\@iparam)); # $l";
@@ -303,7 +303,7 @@ sub addPushConst {
     # %'c'
 
     if ($log->is_trace) {
-	$log->tracef('addPushConst(const="%s")', $const);
+        $log->tracef('addPushConst(const="%s")', $const);
     }
 
     #
@@ -314,9 +314,9 @@ sub addPushConst {
     substr($inside, -1, 1, '');  # Remove ' at the end
 
     if (substr($inside, 0, 1) eq '\\') {
-	return "push(\@iparam, " . $self->_escapedCharacter($inside) . "); # $const";
+        return "push(\@iparam, " . $self->_escapedCharacter($inside) . "); # $const";
     } else {
-	return "push(\@iparam, \"" . quotemeta($inside) . "\"); # $const";
+        return "push(\@iparam, \"" . quotemeta($inside) . "\"); # $const";
     }
 }
 
@@ -331,7 +331,7 @@ sub addPushInt {
     # %{nn}
 
     if ($log->is_trace) {
-	$log->tracef('addPushInt(int="%s")', $int);
+        $log->tracef('addPushInt(int="%s")', $int);
     }
 
     my $value = $int;
@@ -352,7 +352,7 @@ sub addPlus {
     # %+
 
     if ($log->is_trace) {
-	$log->tracef('addPlus(plus="%s")', $plus);
+        $log->tracef('addPlus(plus="%s")', $plus);
     }
 
     return "push(\@iparam, pop(\@iparam) + pop(\@iparam)); # $plus";
@@ -369,7 +369,7 @@ sub addMinus {
     # %+
 
     if ($log->is_trace) {
-	$log->tracef('addMinus(minus="%s")', $minus);
+        $log->tracef('addMinus(minus="%s")', $minus);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x - \$y); } # $minus";
@@ -386,7 +386,7 @@ sub addStar {
     # %+
 
     if ($log->is_trace) {
-	$log->tracef('addStar(star="%s")', $star);
+        $log->tracef('addStar(star="%s")', $star);
     }
 
     return "push(\@iparam, pop(\@iparam) * pop(\@iparam)); # $star";
@@ -403,7 +403,7 @@ sub addDiv {
     # %+
 
     if ($log->is_trace) {
-	$log->tracef('addDiv(div="%s")', $div);
+        $log->tracef('addDiv(div="%s")', $div);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$y ? int(\$x / \$y) : 0); } # $div";
@@ -420,7 +420,7 @@ sub addMod {
     # %+
 
     if ($log->is_trace) {
-	$log->tracef('addMod(mod="%s")', $mod);
+        $log->tracef('addMod(mod="%s")', $mod);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$y ? int(\$x % \$y) : 0); } # $mod";
@@ -437,7 +437,7 @@ sub addBitAnd {
     # %&
 
     if ($log->is_trace) {
-	$log->tracef('addBitAnd(bitAnd="%s")', $bitAnd);
+        $log->tracef('addBitAnd(bitAnd="%s")', $bitAnd);
     }
 
     return "push(\@iparam, pop(\@iparam) & pop(\@iparam)); # $bitAnd";
@@ -454,7 +454,7 @@ sub addBitOr {
     # %|
 
     if ($log->is_trace) {
-	$log->tracef('addBitOr(bitOr="%s")', $bitOr);
+        $log->tracef('addBitOr(bitOr="%s")', $bitOr);
     }
 
     return "push(\@iparam, pop(\@iparam) | pop(\@iparam)); # $bitOr";
@@ -471,7 +471,7 @@ sub addBitXor {
     # %^
 
     if ($log->is_trace) {
-	$log->tracef('addBitXor(bitXor="%s")', $bitXor);
+        $log->tracef('addBitXor(bitXor="%s")', $bitXor);
     }
 
     return "push(\@iparam, pop(\@iparam) ^ pop(\@iparam)); # $bitXor";
@@ -488,7 +488,7 @@ sub addEqual {
     # %=
 
     if ($log->is_trace) {
-	$log->tracef('addEqual(equal="%s")', $equal);
+        $log->tracef('addEqual(equal="%s")', $equal);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x == \$y); } # $equal";
@@ -505,7 +505,7 @@ sub addGreater {
     # %>
 
     if ($log->is_trace) {
-	$log->tracef('addGreater(greater="%s")', $greater);
+        $log->tracef('addGreater(greater="%s")', $greater);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x > \$y); } # $greater";
@@ -522,7 +522,7 @@ sub addLower {
     # %<
 
     if ($log->is_trace) {
-	$log->tracef('addLower(lower="%s")', $lower);
+        $log->tracef('addLower(lower="%s")', $lower);
     }
 
     return "{ my \$y = pop(\@iparam); my \$x = pop(\@iparam); push(\@iparam, \$x < \$y); } # $lower";
@@ -539,7 +539,7 @@ sub addLogicalAnd {
     # %A
 
     if ($log->is_trace) {
-	$log->tracef('addLogicalAnd(logicalAnd="%s")', $logicalAnd);
+        $log->tracef('addLogicalAnd(logicalAnd="%s")', $logicalAnd);
     }
 
     return "push(\@iparam, pop(\@iparam) && pop(\@iparam)); # $logicalAnd";
@@ -556,7 +556,7 @@ sub addLogicalOr {
     # %O
 
     if ($log->is_trace) {
-	$log->tracef('addLogicalOr(logicalOr="%s")', $logicalOr);
+        $log->tracef('addLogicalOr(logicalOr="%s")', $logicalOr);
     }
 
     return "push(\@iparam, pop(\@iparam) || pop(\@iparam)); # $logicalOr";
@@ -573,7 +573,7 @@ sub addNot {
     # %!
 
     if ($log->is_trace) {
-	$log->tracef('addNot(not="%s")', $not);
+        $log->tracef('addNot(not="%s")', $not);
     }
 
     return "push(\@iparam, ! pop(\@iparam)); # $not";
@@ -590,7 +590,7 @@ sub addComplement {
     # %!
 
     if ($log->is_trace) {
-	$log->tracef('addComplement(complement="%s")', $complement);
+        $log->tracef('addComplement(complement="%s")', $complement);
     }
 
     return "push(\@iparam, ~ pop(\@iparam)); # $complement";
@@ -607,7 +607,7 @@ sub addOneToParams {
     # %i
 
     if ($log->is_trace) {
-	$log->tracef('addOneToParams(one="%s")', $one);
+        $log->tracef('addOneToParams(one="%s")', $one);
     }
 
     return "map {\$param[\$_]++} (0..\$#param); # $one";
@@ -623,7 +623,7 @@ sub addIfThenElse {
     my ($self, $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addIfThenElse($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $else="%s", $units3p="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif);
+        $log->tracef('addIfThenElse($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $else="%s", $units3p="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $else, $units3p, $endif);
     }
 
     my $units1     = join("\n", @{$units1p});
@@ -648,7 +648,7 @@ $units1
 $units2
 }";
     if ($elsifUnits) {
-	$rc .= "\n$elsifUnits";
+        $rc .= "\n$elsifUnits";
     }
     $rc .= "
 else { # $else
@@ -668,7 +668,7 @@ sub addIfThen {
     my ($self, $if, $units1p, $then, $units2p, $elsifUnitsp, $endif) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('addIfThen($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $endif);
+        $log->tracef('addIfThen($if="%s", $units1p="%s", $then="%s", $units2p="%s", $elsifUnitsp="%s", $endif="%s")', $if, $units1p, $then, $units2p, $elsifUnitsp, $endif);
     }
 
     my $units1     = join("\n", @{$units1p});
@@ -691,7 +691,7 @@ $units1
 $units2
 } # $endif";
     if ($elsifUnits) {
-	$rc .= "\n$elsifUnits";
+        $rc .= "\n$elsifUnits";
     }
 
     return $rc;
@@ -707,7 +707,7 @@ sub elifUnit {
     my ($self, $else, $units1p, $then, $units2p) = @_;
 
     if ($log->is_trace) {
-	$log->tracef('elifUnit($else="%s", $units1p="%s", $then="%s", $units2p="%s")', $else, $units1p, $then, $units2p);
+        $log->tracef('elifUnit($else="%s", $units1p="%s", $then="%s", $units2p="%s")', $else, $units1p, $then, $units2p);
     }
     my $units1     = join("\n", @{$units1p});
     my $units2     = join("\n", @{$units2p});

@@ -102,28 +102,28 @@ sub new {
     $optp //= {};
 
     if (ref($optp) ne 'HASH') {
-	croak 'Options must be a reference to a HASH';
+        croak 'Options must be a reference to a HASH';
     }
 
     my $file = $optp->{file} // $ENV{MARPAX_DATABASE_TERMINFO_FILE} // '';
     my $txt  = $optp->{txt}  // $ENV{MARPAX_DATABASE_TERMINFO_TXT}  // '';
     my $bin  = $optp->{bin}  // $ENV{MARPAX_DATABASE_TERMINFO_BIN}  // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo.storable');
     my $caps = $optp->{caps} // $ENV{MARPAX_DATABASE_TERMINFO_CAPS} // (
-	$^O eq 'aix'     ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.aix4')   :
-	$^O eq 'hpux'    ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.hpux11') :
-	$^O eq 'dec_osf' ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.osf1r5') :
-	dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps'));
+        $^O eq 'aix'     ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.aix4')   :
+        $^O eq 'hpux'    ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.hpux11') :
+        $^O eq 'dec_osf' ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.osf1r5') :
+        dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps'));
 
     my $cache_stubs_as_txt = $optp->{cache_stubs_as_txt} // $ENV{MARPAX_DATABASE_TERMINFO_CACHE_STUBS_AS_TXT} // 1;
     my $cache_stubs        = $optp->{cache_stubs}        // $ENV{MARPAX_DATABASE_TERMINFO_CACHE_STUBS}        // 1;
     my $stubs_txt;
     my $stubs_bin;
     if ($cache_stubs) {
-	$stubs_txt   = $optp->{stubs_txt} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT} // '';
-	$stubs_bin   = $optp->{stubs_bin} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo-stubs.storable');
+        $stubs_txt   = $optp->{stubs_txt} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT} // '';
+        $stubs_bin   = $optp->{stubs_bin} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo-stubs.storable');
     } else {
-	$stubs_txt = '';
-	$stubs_bin = '';
+        $stubs_txt = '';
+        $stubs_bin = '';
     }
     my $bsd_tputs = $optp->{bsd_tputs} // $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS} // 0;
     my $use_env   = $optp->{use_env  } // $ENV{MARPAX_DATABASE_TERMINFO_USE_ENV}   // 1;
@@ -134,56 +134,56 @@ sub new {
     my $db = undef;
     my $db_ok = 0;
     if ($file) {
-	my $fh;
-	if ($log->is_debug) {
-	    $log->debugf('Loading %s', $file);
-	}
-	if (! open($fh, '<', $file)) {
-	    carp "Cannot open $file, $!";
-	} else {
-	    my $content = do {local $/; <$fh>;};
-	    close($fh) || carp "Cannot close $file, $!";
-	    if ($log->is_debug) {
-		$log->debugf('Parsing %s', $file);
-	    }
-	    eval {$db = MarpaX::Database::Terminfo->new()->parse(\$content)->value()};
-	    if ($@) {
-		carp $@;
-	    } else {
-		$db_ok = 1;
-	    }
-	}
+        my $fh;
+        if ($log->is_debug) {
+            $log->debugf('Loading %s', $file);
+        }
+        if (! open($fh, '<', $file)) {
+            carp "Cannot open $file, $!";
+        } else {
+            my $content = do {local $/; <$fh>;};
+            close($fh) || carp "Cannot close $file, $!";
+            if ($log->is_debug) {
+                $log->debugf('Parsing %s', $file);
+            }
+            eval {$db = MarpaX::Database::Terminfo->new()->parse(\$content)->value()};
+            if ($@) {
+                carp $@;
+            } else {
+                $db_ok = 1;
+            }
+        }
     }
     if (! $db_ok && $txt) {
-	if ($log->is_debug) {
-	    $log->debugf('Parsing txt');
-	}
-	eval {$db = MarpaX::Database::Terminfo->new()->parse(\$txt)->value()};
-	if ($@) {
-	    carp $@;
-	} else {
-	    $db_ok = 1;
-	}
+        if ($log->is_debug) {
+            $log->debugf('Parsing txt');
+        }
+        eval {$db = MarpaX::Database::Terminfo->new()->parse(\$txt)->value()};
+        if ($@) {
+            carp $@;
+        } else {
+            $db_ok = 1;
+        }
     }
     if (! $db_ok) {
-	my $fh;
-	if ($log->is_debug) {
-	    $log->debugf('Loading %s', $bin);
-	}
-	if (! open($fh, '<', $bin)) {
-	    carp "Cannot open $bin, $!";
-	} else {
-	    eval {$db = fd_retrieve($fh)};
-	    if ($@) {
-		carp "$bin: $@";
-	    } else {
-		$db_ok = 1;
-	    }
-	    close($fh) || carp "Cannot close $bin, $!";
-	}
+        my $fh;
+        if ($log->is_debug) {
+            $log->debugf('Loading %s', $bin);
+        }
+        if (! open($fh, '<', $bin)) {
+            carp "Cannot open $bin, $!";
+        } else {
+            eval {$db = fd_retrieve($fh)};
+            if ($@) {
+                carp "$bin: $@";
+            } else {
+                $db_ok = 1;
+            }
+            close($fh) || carp "Cannot close $bin, $!";
+        }
     }
     if (! $db_ok) {
-	croak 'Cannot get a valid terminfo database';
+        croak 'Cannot get a valid terminfo database';
     }
     # -----------------------
     # Load terminfo<->termcap
@@ -193,47 +193,47 @@ sub new {
     my %capalias = ();
     my %infoalias = ();
     {
-	if ($log->is_debug) {
-	    $log->debugf('Loading %s', $caps);
-	}
-	my $fh;
-	if (! open($fh, '<', $caps)) {
-	    carp "Cannot open $caps, $!";
-	} else {
-	    #
-	    # Get translations
-	    #
-	    my $line = 0;
-	    while (defined($_ = <$fh>)) {
-		++$line;
-		if (/^\s*#/) {
-		    next;
-		}
-		s/\s*$//;
-		if (/^\s*capalias\b/) {
-		    my ($capalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
-		    $capalias{$alias} = {name => $name, set => $set, description => $description};
-		} elsif (/^\s*infoalias\b/) {
-		    my ($infoalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
-		    $infoalias{$alias} = {name => $name, set => $set, description => $description};
-		} else {
-		    my ($variable, $feature, $type, $termcap, $keyname, $keyvalue, $translation, $description) = split(/\s+/, $_, 8);
-		    if ($type eq 'bool') {
-			$type = TERMINFO_BOOLEAN;
-		    } elsif ($type eq 'num') {
-			$type = TERMINFO_NUMERIC;
-		    } elsif ($type eq 'str') {
-			$type = TERMINFO_STRING;
-		    } else {
-			$log->warnf('%s(%d): wrong type \'%s\'', $caps, $line, $type); exit;
-			next;
-		    }
-		    $t2other{$feature} = {type => $type, termcap => $termcap, variable => $variable};
-		    $c2other{$termcap} = {type => $type, feature => $feature, variable => $variable};
-		}
-	    }
-	    close($fh) || carp "Cannot close $caps, $!";
-	}
+        if ($log->is_debug) {
+            $log->debugf('Loading %s', $caps);
+        }
+        my $fh;
+        if (! open($fh, '<', $caps)) {
+            carp "Cannot open $caps, $!";
+        } else {
+            #
+            # Get translations
+            #
+            my $line = 0;
+            while (defined($_ = <$fh>)) {
+                ++$line;
+                if (/^\s*#/) {
+                    next;
+                }
+                s/\s*$//;
+                if (/^\s*capalias\b/) {
+                    my ($capalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
+                    $capalias{$alias} = {name => $name, set => $set, description => $description};
+                } elsif (/^\s*infoalias\b/) {
+                    my ($infoalias, $alias, $name, $set, $description) = split(/\s+/, $_, 5);
+                    $infoalias{$alias} = {name => $name, set => $set, description => $description};
+                } else {
+                    my ($variable, $feature, $type, $termcap, $keyname, $keyvalue, $translation, $description) = split(/\s+/, $_, 8);
+                    if ($type eq 'bool') {
+                        $type = TERMINFO_BOOLEAN;
+                    } elsif ($type eq 'num') {
+                        $type = TERMINFO_NUMERIC;
+                    } elsif ($type eq 'str') {
+                        $type = TERMINFO_STRING;
+                    } else {
+                        $log->warnf('%s(%d): wrong type \'%s\'', $caps, $line, $type); exit;
+                        next;
+                    }
+                    $t2other{$feature} = {type => $type, termcap => $termcap, variable => $variable};
+                    $c2other{$termcap} = {type => $type, feature => $feature, variable => $variable};
+                }
+            }
+            close($fh) || carp "Cannot close $caps, $!";
+        }
     }
     # -----------------
     # Load stubs as txt
@@ -241,72 +241,72 @@ sub new {
     my $cached_stubs_as_txt = {};
     my $cached_stubs_as_txt_ok = 0;
     if ($cache_stubs) {
-	if ($stubs_txt) {
-	    my $fh;
-	    if ($log->is_debug) {
-		$log->debugf('Loading %s', $stubs_txt);
-	    }
-	    if (! open($fh, '<', $stubs_txt)) {
-		carp "Cannot open $stubs_txt, $!";
-	    } else {
-		my $content = do {local $/; <$fh>;};
-		close($fh) || carp "Cannot close $stubs_txt, $!";
-		if ($log->is_debug) {
-		    $log->debugf('Evaluating %s', $stubs_txt);
-		}
-		{
-		    #
-		    # Because Data::Dumper have $VARxxx
-		    #
-		    no strict 'vars';
-		    #
-		    # Untaint data
-		    #
-		    my ($untainted) = $content =~ m/(.*)/s;
-		    $cached_stubs_as_txt = eval $untainted; ## no critic
-		    if ($@) {
-			carp "$stubs_txt: $@";
-		    } else {
-			$cached_stubs_as_txt_ok = 1;
-		    }
-		}
-	    }
-	}
-	if (! $cached_stubs_as_txt_ok && $stubs_bin) {
-	    my $fh;
-	    if ($log->is_debug) {
-		$log->debugf('Loading %s', $stubs_bin);
-	    }
-	    if (! open($fh, '<', $stubs_bin)) {
-		carp "Cannot open $stubs_bin, $!";
-	    } else {
-		eval {$cached_stubs_as_txt = fd_retrieve($fh)};
-		if ($@) {
-		    carp "$stubs_bin: $@";
-		} else {
-		    $cached_stubs_as_txt_ok = 1;
-		}
-		close($fh) || carp "Cannot close $stubs_bin, $!";
-	    }
-	}
+        if ($stubs_txt) {
+            my $fh;
+            if ($log->is_debug) {
+                $log->debugf('Loading %s', $stubs_txt);
+            }
+            if (! open($fh, '<', $stubs_txt)) {
+                carp "Cannot open $stubs_txt, $!";
+            } else {
+                my $content = do {local $/; <$fh>;};
+                close($fh) || carp "Cannot close $stubs_txt, $!";
+                if ($log->is_debug) {
+                    $log->debugf('Evaluating %s', $stubs_txt);
+                }
+                {
+                    #
+                    # Because Data::Dumper have $VARxxx
+                    #
+                    no strict 'vars';
+                    #
+                    # Untaint data
+                    #
+                    my ($untainted) = $content =~ m/(.*)/s;
+                    $cached_stubs_as_txt = eval $untainted; ## no critic
+                    if ($@) {
+                        carp "$stubs_txt: $@";
+                    } else {
+                        $cached_stubs_as_txt_ok = 1;
+                    }
+                }
+            }
+        }
+        if (! $cached_stubs_as_txt_ok && $stubs_bin) {
+            my $fh;
+            if ($log->is_debug) {
+                $log->debugf('Loading %s', $stubs_bin);
+            }
+            if (! open($fh, '<', $stubs_bin)) {
+                carp "Cannot open $stubs_bin, $!";
+            } else {
+                eval {$cached_stubs_as_txt = fd_retrieve($fh)};
+                if ($@) {
+                    carp "$stubs_bin: $@";
+                } else {
+                    $cached_stubs_as_txt_ok = 1;
+                }
+                close($fh) || carp "Cannot close $stubs_bin, $!";
+            }
+        }
     }
 
     my $self = {
-	_terminfo_db => $db,
-	_terminfo_current => undef,
-	_t2other => \%t2other,
-	_c2other => \%c2other,
-	_capalias => \%capalias,
-	_infoalias => \%infoalias,
-	_stubs => {},
-	_cache_stubs => $cache_stubs,
-	_cached_stubs => {},
-	_cache_stubs_as_txt => $cache_stubs_as_txt,
-	_cached_stubs_as_txt => $cached_stubs_as_txt,
-	_flush => [ sub {} ],
-	_bsd_tputs => $bsd_tputs,
-	_term => undef,              # Current terminal
-	_use_env => $use_env,
+        _terminfo_db => $db,
+        _terminfo_current => undef,
+        _t2other => \%t2other,
+        _c2other => \%c2other,
+        _capalias => \%capalias,
+        _infoalias => \%infoalias,
+        _stubs => {},
+        _cache_stubs => $cache_stubs,
+        _cached_stubs => {},
+        _cache_stubs_as_txt => $cache_stubs_as_txt,
+        _cached_stubs_as_txt => $cached_stubs_as_txt,
+        _flush => [ sub {} ],
+        _bsd_tputs => $bsd_tputs,
+        _term => undef,              # Current terminal
+        _use_env => $use_env,
     };
 
     bless($self, $class);
@@ -328,7 +328,7 @@ Internal function. Returns the raw database, in the form of an array of hashes.
 sub _terminfo_db {
     my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_terminfo_db})) {
-	$log->warnf('Undefined database');
+        $log->warnf('Undefined database');
     }
     return $self->{_terminfo_db};
 }
@@ -342,10 +342,10 @@ Internal function. Returns the current terminfo entry.
 sub _terminfo_current {
     my $self = shift;
     if (@_) {
-	$self->{_terminfo_current} = shift;
+        $self->{_terminfo_current} = shift;
     }
     if ($log->is_warn && ! defined($self->{_terminfo_current})) {
-	$log->warnf('Undefined current terminfo entry');
+        $log->warnf('Undefined current terminfo entry');
     }
     return $self->{_terminfo_current};
 }
@@ -359,7 +359,7 @@ Internal function. Returns the terminfo->termcap translation hash.
 sub _t2other {
     my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_t2other})) {
-	$log->warnf('Undefined terminfo->termcap translation hash');
+        $log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_t2other};
 }
@@ -373,7 +373,7 @@ Internal function. Returns the terminfo->termcap translation hash.
 sub _c2other {
     my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_c2other})) {
-	$log->warnf('Undefined terminfo->termcap translation hash');
+        $log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_c2other};
 }
@@ -387,7 +387,7 @@ Internal function. Returns the termcap aliases.
 sub _capalias {
     my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_capalias})) {
-	$log->warnf('Undefined terminfo->termcap translation hash');
+        $log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_capalias};
 }
@@ -401,7 +401,7 @@ Internal function. Returns the termcap aliases.
 sub _infoalias {
     my ($self) = (@_);
     if ($log->is_warn && ! defined($self->{_infoalias})) {
-	$log->warnf('Undefined terminfo->termcap translation hash');
+        $log->warnf('Undefined terminfo->termcap translation hash');
     }
     return $self->{_infoalias};
 }
@@ -415,7 +415,7 @@ Internal function. Initialize if needed and if possible the current terminfo. Re
 sub _terminfo_init {
     my ($self) = (@_);
     if (! defined($self->{_terminfo_current})) {
-	$self->tgetent($ENV{TERM} || 'unknown');
+        $self->tgetent($ENV{TERM} || 'unknown');
     }
     return defined($self->_terminfo_current);
 }
@@ -429,7 +429,7 @@ Defines a flush callback function $cb with optional @arguments. Such callback is
 sub flush {
     my ($self, $cb, @args) = @_;
     if (defined($cb)) {
-	$self->{_flush} = [ $cb, @args ];
+        $self->{_flush} = [ $cb, @args ];
     }
     return $self->{_flush};
 }
@@ -447,26 +447,26 @@ sub _find {
     $from //= '';
 
     if ($log->is_debug) {
-	if ($from) {
-	    $log->debugf('Loading %s -> %s', $from, $name);
-	} else {
-	    $log->debugf('Loading %s', $name);
-	}
+        if ($from) {
+            $log->debugf('Loading %s -> %s', $from, $name);
+        } else {
+            $log->debugf('Loading %s', $name);
+        }
     }
 
     my $terminfo_db = $self->_terminfo_db;
     if (defined($terminfo_db)) {
-	foreach (@{$terminfo_db}) {
-	    my $terminfo = $_;
+        foreach (@{$terminfo_db}) {
+            my $terminfo = $_;
 
-	    if (grep {$_ eq $name} @{$terminfo->{alias}}) {
-		if ($log->is_trace) {
-		    $log->tracef('Found alias \'%s\' in terminfo with aliases %s longname \'%s\'', $name, $terminfo->{alias}, $terminfo->{longname});
-		}
-		$rc = $terminfo;
-		last;
-	    }
-	}
+            if (grep {$_ eq $name} @{$terminfo->{alias}}) {
+                if ($log->is_trace) {
+                    $log->tracef('Found alias \'%s\' in terminfo with aliases %s longname \'%s\'', $name, $terminfo->{alias}, $terminfo->{longname});
+                }
+                $rc = $terminfo;
+                last;
+            }
+        }
     }
     return $rc;
 }
@@ -475,65 +475,65 @@ sub tgetent {
     my ($self, $name, $fh) = (@_);
 
     if (! defined($self->_terminfo_db)) {
-	return -1;
+        return -1;
     }
     my $found = $self->_find($name);
     if (! defined($found)) {
-	return 0;
+        return 0;
     }
     #
     # Process cancellations and use=
     #
     my %cancelled = ();
     {
-	my %featured = ();
-	my $i = 0;
-	while ($i <= $#{$found->{feature}}) {
-	    my $feature = $found->{feature}->[$i];
-	    if ($feature->{type} == TERMINFO_BOOLEAN && substr($feature->{name}, -1, 1) eq '@') {
-		my $cancelled = $feature->{name};
-		substr($cancelled, -1, 1, '');
-		$cancelled{$cancelled} = 1;
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] New cancellation %s', $name, $cancelled);
-		}
-		++$i;
-	    } elsif ($feature->{type} == TERMINFO_STRING && $feature->{name} eq 'use') {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] use=\'%s\' with cancellations %s', $name, $feature->{value}, [ keys %cancelled ]);
-		}
-		my $insert = $self->_find($feature->{value}, $name);
-		if (! defined($insert)) {
-		    return 0;
-		}
-		my @keep = ();
-		foreach (@{$insert->{feature}}) {
-		    if (exists($cancelled{$_->{name}})) {
-			if ($log->is_trace) {
-			    $log->tracef('[Loading %s] Skipping cancelled feature \'%s\' from terminfo with aliases %s longname \'%s\'', $name, $_->{name}, $insert->{alias}, $insert->{longname});
-			}
-			next;
-		    }
-		    if (exists($featured{$_->{name}})) {
-			if ($log->is_trace) {
-			    $log->tracef('[Loading %s] Skipping overwriting feature \'%s\' from terminfo with aliases %s longname \'%s\'', $name, $_->{name}, $insert->{alias}, $insert->{longname});
-			}
-			next;
-		    }
-		    if ($log->is_trace) {
-			$log->tracef('[Loading %s] Pushing feature %s from terminfo with aliases %s longname \'%s\'', $name, $_, $insert->{alias}, $insert->{longname});
-		    }
-		    push(@keep, $_);
-		}
-		splice(@{$found->{feature}}, $i, 1, @keep);
-	    } else {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] New feature %s', $name, $feature);
-		}
-		$featured{$feature->{name}} = 1;
-		++$i;
-	    }
-	}
+        my %featured = ();
+        my $i = 0;
+        while ($i <= $#{$found->{feature}}) {
+            my $feature = $found->{feature}->[$i];
+            if ($feature->{type} == TERMINFO_BOOLEAN && substr($feature->{name}, -1, 1) eq '@') {
+                my $cancelled = $feature->{name};
+                substr($cancelled, -1, 1, '');
+                $cancelled{$cancelled} = 1;
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] New cancellation %s', $name, $cancelled);
+                }
+                ++$i;
+            } elsif ($feature->{type} == TERMINFO_STRING && $feature->{name} eq 'use') {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] use=\'%s\' with cancellations %s', $name, $feature->{value}, [ keys %cancelled ]);
+                }
+                my $insert = $self->_find($feature->{value}, $name);
+                if (! defined($insert)) {
+                    return 0;
+                }
+                my @keep = ();
+                foreach (@{$insert->{feature}}) {
+                    if (exists($cancelled{$_->{name}})) {
+                        if ($log->is_trace) {
+                            $log->tracef('[Loading %s] Skipping cancelled feature \'%s\' from terminfo with aliases %s longname \'%s\'', $name, $_->{name}, $insert->{alias}, $insert->{longname});
+                        }
+                        next;
+                    }
+                    if (exists($featured{$_->{name}})) {
+                        if ($log->is_trace) {
+                            $log->tracef('[Loading %s] Skipping overwriting feature \'%s\' from terminfo with aliases %s longname \'%s\'', $name, $_->{name}, $insert->{alias}, $insert->{longname});
+                        }
+                        next;
+                    }
+                    if ($log->is_trace) {
+                        $log->tracef('[Loading %s] Pushing feature %s from terminfo with aliases %s longname \'%s\'', $name, $_, $insert->{alias}, $insert->{longname});
+                    }
+                    push(@keep, $_);
+                }
+                splice(@{$found->{feature}}, $i, 1, @keep);
+            } else {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] New feature %s', $name, $feature);
+                }
+                $featured{$feature->{name}} = 1;
+                ++$i;
+            }
+        }
     }
     #
     # Remember cancelled things
@@ -543,31 +543,31 @@ sub tgetent {
     # Drop needless cancellations
     #
     {
-	my $i = $#{$found->{feature}};
-	foreach (reverse @{$found->{feature}}) {
-	    if ($_->{type} == TERMINFO_BOOLEAN && substr($_->{name}, -1, 1) eq '@') {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Dropping cancellation \'%s\' from terminfo', $name, $found->{feature}->[$i]->{name});
-		}
-		splice(@{$found->{feature}}, $i, 1);
-	    }
-	    --$i;
-	}
+        my $i = $#{$found->{feature}};
+        foreach (reverse @{$found->{feature}}) {
+            if ($_->{type} == TERMINFO_BOOLEAN && substr($_->{name}, -1, 1) eq '@') {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Dropping cancellation \'%s\' from terminfo', $name, $found->{feature}->[$i]->{name});
+                }
+                splice(@{$found->{feature}}, $i, 1);
+            }
+            --$i;
+        }
     }
     #
     # Drop commented features
     #
     {
-	my $i = $#{$found->{feature}};
-	foreach (reverse @{$found->{feature}}) {
-	    if (substr($_->{name}, 0, 1) eq '.') {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Dropping commented \'%s\' from terminfo', $name, $found->{feature}->[$i]->{name});
-		}
-		splice(@{$found->{feature}}, $i, 1);
-	    }
-	    --$i;
-	}
+        my $i = $#{$found->{feature}};
+        foreach (reverse @{$found->{feature}}) {
+            if (substr($_->{name}, 0, 1) eq '.') {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Dropping commented \'%s\' from terminfo', $name, $found->{feature}->[$i]->{name});
+                }
+                splice(@{$found->{feature}}, $i, 1);
+            }
+            --$i;
+        }
     }
     #
     # The raw terminfo is is the features referenced array.
@@ -581,163 +581,163 @@ sub tgetent {
     my $cursor_up = undef;
     my $backspace_if_not_bs = undef;
     {
-	foreach (@{$found->{feature}}) {
-	    my $feature = $_;
-	    my $key = $feature->{name};
-	    #
-	    # For terminfo lookup
-	    #
-	    if (! exists($found->{terminfo}->{$key})) {
-		$found->{terminfo}->{$key} = $feature;
-	    } else {
-		if ($log->is_warn) {
-		    $log->warnf('[Loading %s] Multiple occurence of feature \'%s\'', $name, $key);
-		}
-	    }
-	    #
-	    # Translation exist ?
-	    #
-	    if (! exists($self->_t2other->{$key})) {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Untranslated feature \'%s\'', $name, $key);
-		}
-		next;
-	    }
-	    #
-	    # Yes, check consistency
-	    #
-	    my $type = $self->_t2other->{$key}->{type};
-	    if ($feature->{type} != $type) {
-		if ($log->is_warn) {
-		    $log->warnf('[Loading %s] Wrong type when translating feature \'%s\': %d instead of %d', $name, $key, $type, $feature->{type});
-		}
-		next;
-	    }
-	    #
-	    # Convert to termcap
-	    #
-	    my $termcap  = $self->_t2other->{$key}->{termcap};
-	    if (! defined($termcap)) {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Feature \'%s\' has no termcap equivalent', $name, $key);
-		}
-	    } else {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Pushing termcap feature \'%s\'', $name, $termcap);
-		}
-		if (! exists($found->{termcap}->{$termcap})) {
-		    $found->{termcap}->{$termcap} = $feature;
-		} else {
-		    if ($log->is_warn) {
-			$log->warnf('[Loading %s] Multiple occurence of termcap \'%s\'', $name, $termcap);
-		    }
-		}
-	    }
-	    #
-	    # Convert to variable
-	    #
-	    my $variable = $self->_t2other->{$key}->{variable};
-	    if (! defined($variable)) {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Feature \'%s\' has no variable equivalent', $name, $key);
-		}
-	    } else {
-		if ($log->is_trace) {
-		    $log->tracef('[Loading %s] Pushing variable feature \'%s\'', $name, $variable);
-		}
-		if (! exists($found->{variable}->{$variable})) {
-		    $found->{variable}->{$variable} = $feature;
-		    #
-		    # Keep track of pad_char, cursor_up and backspace_if_not_bs
-		    if ($type == TERMINFO_STRING) {
-			if ($variable eq 'pad_char') {
-			    $pad_char = $feature;
-			    if ($log->is_trace) {
-				$log->tracef('[Loading %s] pad_char is \'%s\'', $name, $pad_char->{value});
-			    }
-			} elsif ($variable eq 'cursor_up') {
-			    $cursor_up = $feature;
-			    if ($log->is_trace) {
-				$log->tracef('[Loading %s] cursor_up is \'%s\'', $name, $cursor_up->{value});
-			    }
-			} elsif ($variable eq 'backspace_if_not_bs') {
-			    $backspace_if_not_bs = $feature;
-			    if ($log->is_trace) {
-				$log->tracef('[Loading %s] backspace_if_not_bs is \'%s\'', $name, $backspace_if_not_bs->{value});
-			    }
-			}
-		    }
-		} else {
-		    if ($log->is_warn) {
-			$log->warnf('[Loading %s] Multiple occurence of variable \'%s\'', $name, $key);
-		    }
-		}
-	    }
-	}
+        foreach (@{$found->{feature}}) {
+            my $feature = $_;
+            my $key = $feature->{name};
+            #
+            # For terminfo lookup
+            #
+            if (! exists($found->{terminfo}->{$key})) {
+                $found->{terminfo}->{$key} = $feature;
+            } else {
+                if ($log->is_warn) {
+                    $log->warnf('[Loading %s] Multiple occurence of feature \'%s\'', $name, $key);
+                }
+            }
+            #
+            # Translation exist ?
+            #
+            if (! exists($self->_t2other->{$key})) {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Untranslated feature \'%s\'', $name, $key);
+                }
+                next;
+            }
+            #
+            # Yes, check consistency
+            #
+            my $type = $self->_t2other->{$key}->{type};
+            if ($feature->{type} != $type) {
+                if ($log->is_warn) {
+                    $log->warnf('[Loading %s] Wrong type when translating feature \'%s\': %d instead of %d', $name, $key, $type, $feature->{type});
+                }
+                next;
+            }
+            #
+            # Convert to termcap
+            #
+            my $termcap  = $self->_t2other->{$key}->{termcap};
+            if (! defined($termcap)) {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Feature \'%s\' has no termcap equivalent', $name, $key);
+                }
+            } else {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Pushing termcap feature \'%s\'', $name, $termcap);
+                }
+                if (! exists($found->{termcap}->{$termcap})) {
+                    $found->{termcap}->{$termcap} = $feature;
+                } else {
+                    if ($log->is_warn) {
+                        $log->warnf('[Loading %s] Multiple occurence of termcap \'%s\'', $name, $termcap);
+                    }
+                }
+            }
+            #
+            # Convert to variable
+            #
+            my $variable = $self->_t2other->{$key}->{variable};
+            if (! defined($variable)) {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Feature \'%s\' has no variable equivalent', $name, $key);
+                }
+            } else {
+                if ($log->is_trace) {
+                    $log->tracef('[Loading %s] Pushing variable feature \'%s\'', $name, $variable);
+                }
+                if (! exists($found->{variable}->{$variable})) {
+                    $found->{variable}->{$variable} = $feature;
+                    #
+                    # Keep track of pad_char, cursor_up and backspace_if_not_bs
+                    if ($type == TERMINFO_STRING) {
+                        if ($variable eq 'pad_char') {
+                            $pad_char = $feature;
+                            if ($log->is_trace) {
+                                $log->tracef('[Loading %s] pad_char is \'%s\'', $name, $pad_char->{value});
+                            }
+                        } elsif ($variable eq 'cursor_up') {
+                            $cursor_up = $feature;
+                            if ($log->is_trace) {
+                                $log->tracef('[Loading %s] cursor_up is \'%s\'', $name, $cursor_up->{value});
+                            }
+                        } elsif ($variable eq 'backspace_if_not_bs') {
+                            $backspace_if_not_bs = $feature;
+                            if ($log->is_trace) {
+                                $log->tracef('[Loading %s] backspace_if_not_bs is \'%s\'', $name, $backspace_if_not_bs->{value});
+                            }
+                        }
+                    }
+                } else {
+                    if ($log->is_warn) {
+                        $log->warnf('[Loading %s] Multiple occurence of variable \'%s\'', $name, $key);
+                    }
+                }
+            }
+        }
 
-	# The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively.
-	#
-	# PC is used in the delay function.
-	#
-	if (defined($pad_char)) {
-	    if ($log->is_trace) {
-		$log->tracef('[Loading %s] Initialized PC to \'%s\'', $name, $pad_char->{value});
-	    }
-	    $found->{variable}->{PC} = $pad_char;
-	}
-	#
-	# UP is not used by ncurses.
-	#
-	if (defined($cursor_up)) {
-	    if ($log->is_trace) {
-		$log->tracef('[Loading %s] Initialized UP to \'%s\'', $name, $cursor_up->{value});
-	    }
-	    $found->{variable}->{UP} = $cursor_up;
-	}
-	#
-	# BC is used in the tgoto emulation.
-	#
-	if (defined($backspace_if_not_bs)) {
-	    if ($log->is_trace) {
-		$log->tracef('[Loading %s] Initialized BC to \'%s\'', $name, $backspace_if_not_bs->{value});
-	    }
-	    $found->{variable}->{BC} = $backspace_if_not_bs;
-	}
-	#
-	# The variable ospeed is set in a system-specific coding to reflect the terminal speed.
-	#
-	my ($baudrate, $ospeed) = $self->_get_ospeed_and_baudrate($fh);
-	my $OSPEED = {name => 'ospeed', type => TERMINFO_NUMERIC, value => $ospeed};
-	if ($log->is_trace) {
-	    $log->tracef('[Loading %s] Initialized ospeed to %d', $name, $OSPEED->{value});
-	}
-	$found->{variable}->{ospeed} = $OSPEED;
-	#
-	# The variable baudrate is used eventually in delay
-	#
-	my $BAUDRATE = {name => 'baudrate', type => TERMINFO_NUMERIC, value => $baudrate};
-	if ($log->is_trace) {
-	    $log->tracef('[Loading %s] Initialized baudrate to %d', $name, $BAUDRATE->{value});
-	}
-	$found->{variable}->{baudrate} = $BAUDRATE;
-	#
-	# ospeed and baudrate are add-ons, not in the terminfo database.
-	# If you look to the terminfo<->Caps translation files, you will see that none of ospeed
-	# nor baudrate variables exist. Nevertheless, we check if they these entries WOULD exist
-	# and warn about it, because we would overwrite them.
-	#
-	if (exists($found->{terminfo}->{ospeed})) {
-	    if ($log->is_warn) {
-		$log->tracef('[Loading %s] Overwriting ospeed to \'%s\'', $name, $OSPEED->{value});
-	    }
-	}
-	$found->{terminfo}->{ospeed} = $found->{variable}->{ospeed};
-	if (exists($found->{terminfo}->{baudrate})) {
-	    if ($log->is_warn) {
-		$log->tracef('[Loading %s] Overwriting baudrate to \'%s\'', $name, $BAUDRATE->{value});
-	    }
-	}
-	$found->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
+        # The variables PC, UP and BC are set by tgetent to the terminfo entry's data for pad_char, cursor_up and backspace_if_not_bs, respectively.
+        #
+        # PC is used in the delay function.
+        #
+        if (defined($pad_char)) {
+            if ($log->is_trace) {
+                $log->tracef('[Loading %s] Initialized PC to \'%s\'', $name, $pad_char->{value});
+            }
+            $found->{variable}->{PC} = $pad_char;
+        }
+        #
+        # UP is not used by ncurses.
+        #
+        if (defined($cursor_up)) {
+            if ($log->is_trace) {
+                $log->tracef('[Loading %s] Initialized UP to \'%s\'', $name, $cursor_up->{value});
+            }
+            $found->{variable}->{UP} = $cursor_up;
+        }
+        #
+        # BC is used in the tgoto emulation.
+        #
+        if (defined($backspace_if_not_bs)) {
+            if ($log->is_trace) {
+                $log->tracef('[Loading %s] Initialized BC to \'%s\'', $name, $backspace_if_not_bs->{value});
+            }
+            $found->{variable}->{BC} = $backspace_if_not_bs;
+        }
+        #
+        # The variable ospeed is set in a system-specific coding to reflect the terminal speed.
+        #
+        my ($baudrate, $ospeed) = $self->_get_ospeed_and_baudrate($fh);
+        my $OSPEED = {name => 'ospeed', type => TERMINFO_NUMERIC, value => $ospeed};
+        if ($log->is_trace) {
+            $log->tracef('[Loading %s] Initialized ospeed to %d', $name, $OSPEED->{value});
+        }
+        $found->{variable}->{ospeed} = $OSPEED;
+        #
+        # The variable baudrate is used eventually in delay
+        #
+        my $BAUDRATE = {name => 'baudrate', type => TERMINFO_NUMERIC, value => $baudrate};
+        if ($log->is_trace) {
+            $log->tracef('[Loading %s] Initialized baudrate to %d', $name, $BAUDRATE->{value});
+        }
+        $found->{variable}->{baudrate} = $BAUDRATE;
+        #
+        # ospeed and baudrate are add-ons, not in the terminfo database.
+        # If you look to the terminfo<->Caps translation files, you will see that none of ospeed
+        # nor baudrate variables exist. Nevertheless, we check if they these entries WOULD exist
+        # and warn about it, because we would overwrite them.
+        #
+        if (exists($found->{terminfo}->{ospeed})) {
+            if ($log->is_warn) {
+                $log->tracef('[Loading %s] Overwriting ospeed to \'%s\'', $name, $OSPEED->{value});
+            }
+        }
+        $found->{terminfo}->{ospeed} = $found->{variable}->{ospeed};
+        if (exists($found->{terminfo}->{baudrate})) {
+            if ($log->is_warn) {
+                $log->tracef('[Loading %s] Overwriting baudrate to \'%s\'', $name, $BAUDRATE->{value});
+            }
+        }
+        $found->{terminfo}->{baudrate} = $found->{variable}->{baudrate};
     }
 
     #
@@ -760,44 +760,44 @@ sub _stub {
     my ($self, $featurevalue) = @_;
 
     if ($self->{_cache_stubs}) {
-	if (exists($self->{_cached_stubs}->{$featurevalue})) {
-	    if ($log->is_trace) {
-		$log->tracef('Getting \'%s\' compiled stub from cache', $featurevalue);
-	    }
-	    $self->{_stubs}->{$featurevalue} = $self->{_cached_stubs}->{$featurevalue};
-	}
+        if (exists($self->{_cached_stubs}->{$featurevalue})) {
+            if ($log->is_trace) {
+                $log->tracef('Getting \'%s\' compiled stub from cache', $featurevalue);
+            }
+            $self->{_stubs}->{$featurevalue} = $self->{_cached_stubs}->{$featurevalue};
+        }
     }
     if (! exists($self->{_stubs}->{$featurevalue})) {
-	my $stub_as_txt = undef;
-	if ($self->{_cache_stubs_as_txt}) {
-	    if (exists($self->{_cached_stubs_as_txt}->{$featurevalue})) {
-		if ($log->is_trace) {
-		    $log->tracef('Getting \'%s\' stub as txt from cache', $featurevalue);
-		}
-		$stub_as_txt = $self->{_cached_stubs_as_txt}->{$featurevalue};
-	    }
-	}
-	if (! defined($stub_as_txt)) {
-	    #
-	    # Very important: we restore the ',': it is parsed as either
-	    # and EOF (normal case) or an ENDIF (some entries are MISSING
-	    # the '%;' ENDIF tag at the very end). I am not going to change
-	    # the grammar when documentation says that a string follows
-	    # the ALGOL68, which has introduced the ENDIF tag to solve the
-	    # IF-THEN-ELSE-THEN ambiguity.
-	    # There is no side-effect doing so, but keeping the grammar clean.
-	    my $string = "$featurevalue,";
-	    if ($log->is_trace) {
-		$log->tracef('Parsing \'%s\'', $string);
-	    }
-	    my $parseTreeValue = MarpaX::Database::Terminfo::String->new()->parse(\$string)->value();
-	    #
-	    # Enclose the result for anonymous subroutine evaluation
-	    # We reindent everything by two spaces
-	    #
-	    my $indent = join("\n", @{${$parseTreeValue}});
-	    $indent =~ s/^/  /smg;
-	    $stub_as_txt = "
+        my $stub_as_txt = undef;
+        if ($self->{_cache_stubs_as_txt}) {
+            if (exists($self->{_cached_stubs_as_txt}->{$featurevalue})) {
+                if ($log->is_trace) {
+                    $log->tracef('Getting \'%s\' stub as txt from cache', $featurevalue);
+                }
+                $stub_as_txt = $self->{_cached_stubs_as_txt}->{$featurevalue};
+            }
+        }
+        if (! defined($stub_as_txt)) {
+            #
+            # Very important: we restore the ',': it is parsed as either
+            # and EOF (normal case) or an ENDIF (some entries are MISSING
+            # the '%;' ENDIF tag at the very end). I am not going to change
+            # the grammar when documentation says that a string follows
+            # the ALGOL68, which has introduced the ENDIF tag to solve the
+            # IF-THEN-ELSE-THEN ambiguity.
+            # There is no side-effect doing so, but keeping the grammar clean.
+            my $string = "$featurevalue,";
+            if ($log->is_trace) {
+                $log->tracef('Parsing \'%s\'', $string);
+            }
+            my $parseTreeValue = MarpaX::Database::Terminfo::String->new()->parse(\$string)->value();
+            #
+            # Enclose the result for anonymous subroutine evaluation
+            # We reindent everything by two spaces
+            #
+            my $indent = join("\n", @{${$parseTreeValue}});
+            $indent =~ s/^/  /smg;
+            $stub_as_txt = "
 #
 # Stub version of: $featurevalue
 #
@@ -811,24 +811,24 @@ $indent
   return \$rc;
 }
 ";
-	    if ($log->is_trace) {
-		$log->tracef('Parsing \'%s\' gives stub: %s', $string, $stub_as_txt);
-	    }
-	    if ($self->{_cache_stubs_as_txt}) {
-		$self->{_cached_stubs_as_txt}->{$featurevalue} = $stub_as_txt;
-	    }
-	}
-	if ($log->is_trace) {
-	    $log->tracef('Compiling \'%s\' stub', $featurevalue);
-	}
-	$self->{_stubs}->{$featurevalue} = eval $stub_as_txt;  ## no critic
-	if ($@) {
-	    carp "Problem with $featurevalue\n$stub_as_txt\n$@\nReplaced by a stub returning empty string...";
-	    $self->{_stubs}->{$featurevalue} = sub {return '';};
-	}
-	if ($self->{_cache_stubs}) {
-	    $self->{_cached_stubs}->{$featurevalue} = $self->{_stubs}->{$featurevalue};
-	}
+            if ($log->is_trace) {
+                $log->tracef('Parsing \'%s\' gives stub: %s', $string, $stub_as_txt);
+            }
+            if ($self->{_cache_stubs_as_txt}) {
+                $self->{_cached_stubs_as_txt}->{$featurevalue} = $stub_as_txt;
+            }
+        }
+        if ($log->is_trace) {
+            $log->tracef('Compiling \'%s\' stub', $featurevalue);
+        }
+        $self->{_stubs}->{$featurevalue} = eval $stub_as_txt;  ## no critic
+        if ($@) {
+            carp "Problem with $featurevalue\n$stub_as_txt\n$@\nReplaced by a stub returning empty string...";
+            $self->{_stubs}->{$featurevalue} = sub {return '';};
+        }
+        if ($self->{_cache_stubs}) {
+            $self->{_cached_stubs}->{$featurevalue} = $self->{_stubs}->{$featurevalue};
+        }
     }
 
     return $self->{_stubs}->{$featurevalue};
@@ -840,10 +840,10 @@ sub _stubs {
     $self->{_stubs} = {};
 
     foreach (values %{$self->_terminfo_current->{terminfo}}) {
-	my $feature = $_;
-	if ($feature->{type} == TERMINFO_STRING) {
-	    $self->_stub($feature->{value});
-	}
+        my $feature = $_;
+        if ($feature->{type} == TERMINFO_STRING) {
+            $self->_stub($feature->{value});
+        }
     }
 }
 
@@ -892,73 +892,73 @@ sub _get_ospeed_and_baudrate {
     my $ospeed = 0;
 
     if (defined($fh)) {
-	my $reffh = ref($fh);
-	if ($reffh ne 'GLOB') {
-	    if ($log->is_warn) {
-		$log->warnf('filehandle should be a reference to GLOB instead of %s', $reffh || '<nothing>');
-	    }
-	}
-	$fh = undef;
+        my $reffh = ref($fh);
+        if ($reffh ne 'GLOB') {
+            if ($log->is_warn) {
+                $log->warnf('filehandle should be a reference to GLOB instead of %s', $reffh || '<nothing>');
+            }
+        }
+        $fh = undef;
     }
 
     if (defined($ENV{MARPAX_DATABASE_TERMINFO_OSPEED})) {
-	$ospeed = $ENV{MARPAX_DATABASE_TERMINFO_OSPEED};
+        $ospeed = $ENV{MARPAX_DATABASE_TERMINFO_OSPEED};
     } else {
-	if ($HAVE_POSIX) {
-	    my $termios = eval { POSIX::Termios->new() };
-	    if (! defined($termios)) {
-		if ($log->is_trace) {
-		    $log->tracef('POSIX::Termios->new() failure, %s', $@);
-		}
-	    } else {
-		my $fileno = defined($fh) ? fileno($fh) : (fileno(\*STDIN) || 0);
-		if ($log->is_trace) {
-		    $log->tracef('Trying to get attributes on fileno %d', $fileno);
-		}
-		eval {$termios->getattr($fileno)};
-		if ($@) {
-		    if ($log->is_trace) {
-			$log->tracef('POSIX::Termios::getattr(%d) failure, %s', $fileno, $@);
-		    }
-		    $termios = undef;
-		}
-	    }
-	    if (defined($termios)) {
-		my $this = eval { $termios->getospeed() };
-		if (! defined($this)) {
-		    if ($log->is_trace) {
-			$log->tracef('getospeed() failure, %s', $@);
-		    }
-		} else {
-		    $ospeed = $this;
-		    if ($log->is_trace) {
-			$log->tracef('getospeed() returned %d', $ospeed);
-		    }
-		}
-	    }
-	}
+        if ($HAVE_POSIX) {
+            my $termios = eval { POSIX::Termios->new() };
+            if (! defined($termios)) {
+                if ($log->is_trace) {
+                    $log->tracef('POSIX::Termios->new() failure, %s', $@);
+                }
+            } else {
+                my $fileno = defined($fh) ? fileno($fh) : (fileno(\*STDIN) || 0);
+                if ($log->is_trace) {
+                    $log->tracef('Trying to get attributes on fileno %d', $fileno);
+                }
+                eval {$termios->getattr($fileno)};
+                if ($@) {
+                    if ($log->is_trace) {
+                        $log->tracef('POSIX::Termios::getattr(%d) failure, %s', $fileno, $@);
+                    }
+                    $termios = undef;
+                }
+            }
+            if (defined($termios)) {
+                my $this = eval { $termios->getospeed() };
+                if (! defined($this)) {
+                    if ($log->is_trace) {
+                        $log->tracef('getospeed() failure, %s', $@);
+                    }
+                } else {
+                    $ospeed = $this;
+                    if ($log->is_trace) {
+                        $log->tracef('getospeed() returned %d', $ospeed);
+                    }
+                }
+            }
+        }
     }
 
 
 
     if (! exists($OSPEED_TO_BAUDRATE{$ospeed})) {
-	if ($log->is_warn) {
-	    $log->warnf('ospeed %d is an unknown value', $ospeed);
-	}
-	$ospeed = 0;
+        if ($log->is_warn) {
+            $log->warnf('ospeed %d is an unknown value', $ospeed);
+        }
+        $ospeed = 0;
     }
 
     if (! $ospeed) {
-	$ospeed = 13;
-	if ($log->is_warn) {
-	    $log->warnf('ospeed defaulting to %d', $ospeed);
-	}
+        $ospeed = 13;
+        if ($log->is_warn) {
+            $log->warnf('ospeed defaulting to %d', $ospeed);
+        }
     }
 
     $baudrate = $ENV{MARPAX_DATABASE_TERMINFO_BAUDRATE} || $OSPEED_TO_BAUDRATE{$ospeed} || 0;
 
     if ($log->is_trace) {
-	$log->tracef('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
+        $log->tracef('ospeed/baudrate: %d/%d', $ospeed, $baudrate);
     }
 
     return ($baudrate, $ospeed);
@@ -974,63 +974,63 @@ sub _tget {
     my $found = undef;
 
     if ($self->_terminfo_init()) {
-	#
-	# First lookup in the hashes. If found, we will get the raw terminfo feature entry.
-	#
-	if (! exists($self->_terminfo_current->{$space}->{$id})) {
-	    #
-	    # No such entry
-	    #
-	    if ($log->is_trace) {
-		$log->tracef('No %s entry with id \'%s\'', $space, $id);
-	    }
-	} else {
-	    #
-	    # Get the raw terminfo entry. The only entries for which it may not There is no check, it must exist by construction, c.f.
-	    # routine tgetent(), even for variables ospeed and baudrate that are add-ons.
-	    #
-	    my $t = $self->_terminfo_current->{$space}->{$id};
-	    my $feature = $self->_terminfo_current->{terminfo}->{$t->{name}};
-	    if ($log->is_trace) {
-		$log->tracef('%s entry with id \'%s\' maps to terminfo feature %s', $space, $id, $feature);
-	    }
-	    if (defined($default_if_cancelled) && exists($self->_terminfo_current->{cancelled}->{$feature->{name}})) {
-		if ($log->is_trace) {
-		    $log->tracef('Cancelled %s feature %s', $space, $feature->{name});
-		}
-		$rc = $default_if_cancelled;
-	    } else {
-		#
-		# Check if this is the correct type
-		#
-		if ($feature->{type} == $type) {
-		    $found = $feature;
-		    if ($type == TERMINFO_STRING) {
-			$rc = defined($default_if_found) ? $default_if_found : \$feature->{value};
-		    } else {
-			$rc = defined($default_if_found) ? $default_if_found : $feature->{value};
-		    }
-		} elsif (defined($default_if_wrong_type)) {
-		    if ($log->is_trace) {
-			$log->tracef('Found %s feature %s with type %d != %d', $space, $id, $feature->{type}, $type);
-		    }
-		    $rc = $default_if_wrong_type;
-		}
-	    }
-	}
+        #
+        # First lookup in the hashes. If found, we will get the raw terminfo feature entry.
+        #
+        if (! exists($self->_terminfo_current->{$space}->{$id})) {
+            #
+            # No such entry
+            #
+            if ($log->is_trace) {
+                $log->tracef('No %s entry with id \'%s\'', $space, $id);
+            }
+        } else {
+            #
+            # Get the raw terminfo entry. The only entries for which it may not There is no check, it must exist by construction, c.f.
+            # routine tgetent(), even for variables ospeed and baudrate that are add-ons.
+            #
+            my $t = $self->_terminfo_current->{$space}->{$id};
+            my $feature = $self->_terminfo_current->{terminfo}->{$t->{name}};
+            if ($log->is_trace) {
+                $log->tracef('%s entry with id \'%s\' maps to terminfo feature %s', $space, $id, $feature);
+            }
+            if (defined($default_if_cancelled) && exists($self->_terminfo_current->{cancelled}->{$feature->{name}})) {
+                if ($log->is_trace) {
+                    $log->tracef('Cancelled %s feature %s', $space, $feature->{name});
+                }
+                $rc = $default_if_cancelled;
+            } else {
+                #
+                # Check if this is the correct type
+                #
+                if ($feature->{type} == $type) {
+                    $found = $feature;
+                    if ($type == TERMINFO_STRING) {
+                        $rc = defined($default_if_found) ? $default_if_found : \$feature->{value};
+                    } else {
+                        $rc = defined($default_if_found) ? $default_if_found : $feature->{value};
+                    }
+                } elsif (defined($default_if_wrong_type)) {
+                    if ($log->is_trace) {
+                        $log->tracef('Found %s feature %s with type %d != %d', $space, $id, $feature->{type}, $type);
+                    }
+                    $rc = $default_if_wrong_type;
+                }
+            }
+        }
     }
 
     if (defined($found) && defined($areap) && ref($areap)) {
-	if ($type == TERMINFO_STRING) {
-	    if (! defined(${$areap})) {
-		${$areap} = '';
-	    }
-	    my $pos = pos(${$areap}) || 0;
-	    substr(${$areap}, $pos, 0, $found->{value});
-	    pos(${$areap}) = $pos + length($found->{value});
-	} else {
-	    ${$areap} = $found->{value};
-	}
+        if ($type == TERMINFO_STRING) {
+            if (! defined(${$areap})) {
+                ${$areap} = '';
+            }
+            my $pos = pos(${$areap}) || 0;
+            substr(${$areap}, $pos, 0, $found->{value});
+            pos(${$areap}) = $pos + length($found->{value});
+        } else {
+            ${$areap} = $found->{value};
+        }
     }
 
     return $rc;
@@ -1050,31 +1050,31 @@ sub delay {
     #
     my $outc = $self->{_outc};
     if (defined($outc)) {
-	my $PC;
-	if ($self->tvgetflag('no_pad_char') || ! $self->tvgetstr('PC', \$PC)) {
-	    #
-	    # usleep() unit is micro-second
-	    #
-	    usleep($ms * 1000);
-	} else {
-	    #
-	    # baudrate is always defined.
-	    #
-	    my $baudrate;
-	    $self->tvgetnum('baudrate', \$baudrate);
-	    my $nullcount = int(($ms * $baudrate) / (BAUDBYTE * 1000));
-	    #
-	    # We have no interface to 'tack' program, so no need to have a global for _nulls_sent
-	    #
-	    while ($nullcount-- > 0) {
-		&$outc($self->tparm($PC), @{$self->{_outcArgs}});
-	    }
-	    #
-	    # Call for a flush
-	    #
-	    my ($flushcb, @flushargs) = @{$self->flush};
-	    &$flushcb(@flushargs);
-	}
+        my $PC;
+        if ($self->tvgetflag('no_pad_char') || ! $self->tvgetstr('PC', \$PC)) {
+            #
+            # usleep() unit is micro-second
+            #
+            usleep($ms * 1000);
+        } else {
+            #
+            # baudrate is always defined.
+            #
+            my $baudrate;
+            $self->tvgetnum('baudrate', \$baudrate);
+            my $nullcount = int(($ms * $baudrate) / (BAUDBYTE * 1000));
+            #
+            # We have no interface to 'tack' program, so no need to have a global for _nulls_sent
+            #
+            while ($nullcount-- > 0) {
+                &$outc($self->tparm($PC), @{$self->{_outcArgs}});
+            }
+            #
+            # Call for a flush
+            #
+            my ($flushcb, @flushargs) = @{$self->flush};
+            &$flushcb(@flushargs);
+        }
     }
 }
 
@@ -1210,107 +1210,107 @@ sub _tputs {
     my $normal_delay;
 
     if (! defined($self->{_term})) {
-	#
-	# No current terminal: setuppterm() has not been called
-	#
-	$always_delay = 0;
-	$normal_delay = 1;
+        #
+        # No current terminal: setuppterm() has not been called
+        #
+        $always_delay = 0;
+        $normal_delay = 1;
     } else {
-	my $xon_xoff = $self->tvgetflag('xon_xoff');
-	my $padding_baud_rate = 0;
-	$self->tvgetnum('padding_baud_rate', \$padding_baud_rate);
-	my $baudrate = 0;
-	$self->tvgetnum('baudrate', \$baudrate);
+        my $xon_xoff = $self->tvgetflag('xon_xoff');
+        my $padding_baud_rate = 0;
+        $self->tvgetnum('padding_baud_rate', \$padding_baud_rate);
+        my $baudrate = 0;
+        $self->tvgetnum('baudrate', \$baudrate);
 
-	$always_delay = ($str eq $bell || $str eq $flash_screen) ? 1 : 0;
-	$normal_delay = (! $xon_xoff && $padding_baud_rate && $baudrate >= $padding_baud_rate) ? 1 : 0;
+        $always_delay = ($str eq $bell || $str eq $flash_screen) ? 1 : 0;
+        $normal_delay = (! $xon_xoff && $padding_baud_rate && $baudrate >= $padding_baud_rate) ? 1 : 0;
     }
 
     my $trailpad = 0;
     pos($str) = undef;
     if ($self->{_bsd_tputs} && length($str) > 0) {
-	if ($str =~ /^([[:digit:]]+)(?:\.([[:digit:]])?[[:digit:]]*)?(\*)?/) {
-	    my ($one, $two, $three) = (
-		substr($str, $-[1], $+[1] - $-[1]),
-		defined($-[2]) ? substr($str, $-[2], $+[2] - $-[2]) : 0,
-		defined($-[3]) ? 1 : 0);
-	    $trailpad = $one * 10;
-	    $trailpad += $two;
-	    if ($three) {
-		$trailpad *= $affcnt;
-	    }
-	    pos($str) = $+[0];
-	}
+        if ($str =~ /^([[:digit:]]+)(?:\.([[:digit:]])?[[:digit:]]*)?(\*)?/) {
+            my ($one, $two, $three) = (
+                substr($str, $-[1], $+[1] - $-[1]),
+                defined($-[2]) ? substr($str, $-[2], $+[2] - $-[2]) : 0,
+                defined($-[3]) ? 1 : 0);
+            $trailpad = $one * 10;
+            $trailpad += $two;
+            if ($three) {
+                $trailpad *= $affcnt;
+            }
+            pos($str) = $+[0];
+        }
     }
     my $indexmax = length($str);
     my $index = pos($str) || 0;
     while ($index <= $indexmax) {
-	my $c = substr($str, $index, 1);
-	if ($c ne '$') {
-	    &$outc($c, @outcArgs);
-	} else {
-	    $index++;
-	    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-	    if ($c ne '<') {
-		&$outc('$', @outcArgs);
-		if ($c) {
-		    &$outc($c, @outcArgs);
-		}
-	    } else {
-		$c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
-		if ((! ($c =~ /[[:digit:]]/) && $c ne '.') ||
-		    # Note: if $index is after the end $str, perl treat it as the end
-		    index($str, '>', $index) < $index) {
-		    &$outc('$', @outcArgs);
-		    &$outc('<', @outcArgs);
-		    #
-		    # The EOF will automatically go here
-		    #
-		    next;
-		}
+        my $c = substr($str, $index, 1);
+        if ($c ne '$') {
+            &$outc($c, @outcArgs);
+        } else {
+            $index++;
+            $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+            if ($c ne '<') {
+                &$outc('$', @outcArgs);
+                if ($c) {
+                    &$outc($c, @outcArgs);
+                }
+            } else {
+                $c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
+                if ((! ($c =~ /[[:digit:]]/) && $c ne '.') ||
+                    # Note: if $index is after the end $str, perl treat it as the end
+                    index($str, '>', $index) < $index) {
+                    &$outc('$', @outcArgs);
+                    &$outc('<', @outcArgs);
+                    #
+                    # The EOF will automatically go here
+                    #
+                    next;
+                }
 
-		my $number = 0;
-		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-		while ($c =~ /[[:digit:]]/) {
-		    $number = $number * 10 + $c;
-		    $c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
-		}
-		$number *= 10;
-		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-		if ($c eq '.') {
-		    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-		    if ($c =~ /[[:digit:]]/) {
-			$number += $c;
-			$index++;
-		    }
-		    while (($index <= $indexmax) && substr($str, $index, 1) =~ /[[:digit:]]/) {
-			$index++;
-		    }
-		}
-		my $mandatory = 0;
-		$c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-		while ($c eq '*' || $c eq '/') {
-		    if ($c eq '*') {
-			$number *= $affcnt;
-			$index++;
-		    } else {
-			$mandatory = 1;
-			$index++;
-		    }
-		    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
-		}
+                my $number = 0;
+                $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+                while ($c =~ /[[:digit:]]/) {
+                    $number = $number * 10 + $c;
+                    $c = (++$index <= $indexmax) ? substr($str, $index, 1) : '';
+                }
+                $number *= 10;
+                $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+                if ($c eq '.') {
+                    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+                    if ($c =~ /[[:digit:]]/) {
+                        $number += $c;
+                        $index++;
+                    }
+                    while (($index <= $indexmax) && substr($str, $index, 1) =~ /[[:digit:]]/) {
+                        $index++;
+                    }
+                }
+                my $mandatory = 0;
+                $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+                while ($c eq '*' || $c eq '/') {
+                    if ($c eq '*') {
+                        $number *= $affcnt;
+                        $index++;
+                    } else {
+                        $mandatory = 1;
+                        $index++;
+                    }
+                    $c = ($index <= $indexmax) ? substr($str, $index, 1) : '';
+                }
 
-		if ($number > 0 && ($always_delay || $normal_delay || $mandatory)) {
-		    $self->delay(int($number / 10));
-		}
-	    }
-	}
+                if ($number > 0 && ($always_delay || $normal_delay || $mandatory)) {
+                    $self->delay(int($number / 10));
+                }
+            }
+        }
 
-	$index++;
+        $index++;
     }
 
     if ($trailpad > 0 && ($always_delay || $normal_delay)) {
-	$self->delay(int($trailpad / 10));
+        $self->delay(int($trailpad / 10));
     }
 }
 
@@ -1369,19 +1369,19 @@ sub use_env {
     my $self = shift;
 
     if (@_) {
-	$self->{_use_env} = shift;
-	#
-	# If user gave undef as argument, convert it to 0.
-	#
-	if (! defined($self->{_use_env})) {
-	    $self->{_use_env} = 0;
-	}
-	#
-	# Finally convert it to 1 if ! false
-	#
-	if (! $self->{_use_env}) {
-	    $self->{_use_env} = 1;
-	}
+        $self->{_use_env} = shift;
+        #
+        # If user gave undef as argument, convert it to 0.
+        #
+        if (! defined($self->{_use_env})) {
+            $self->{_use_env} = 0;
+        }
+        #
+        # Finally convert it to 1 if ! false
+        #
+        if (! $self->{_use_env}) {
+            $self->{_use_env} = 1;
+        }
     }
 
     return $self->{_use_env};

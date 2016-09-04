@@ -12,7 +12,7 @@ our @EXPORT_TYPES = qw/TERMINFO_BOOLEAN TERMINFO_NUMERIC TERMINFO_STRING/;
 
 our @EXPORT_OK = (@EXPORT_TYPES);
 our %EXPORT_TAGS = ('all'       => \@EXPORT_OK,
-		    'types'     => \@EXPORT_TYPES);
+                    'types'     => \@EXPORT_TYPES);
 
 # ABSTRACT: Terminfo constants
 

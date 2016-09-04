@@ -52,36 +52,36 @@ my %events = (
     'MAXMATCH' => sub {
         my ($recce, $bufferp, $tokensrep, $string, $start, $length) = @_;
 
-	my @expected = @{$recce->terminals_expected()};
-	my $prev = pos(${$bufferp});
-	pos(${$bufferp}) = $start;
-	my $ok = 0;
-	if ($log->is_trace) {
-	    $log->tracef('Expected terminals: %s', \@expected);
-	}
-	foreach (@{$tokensrep}) {
-	    my ($token, $re) = @{$_};
-	    if ((grep {$_ eq $token} @expected)) {
-		if (${$bufferp} =~ $re) {
-		    $length = $+[1] - $-[1];
-		    $string = substr(${$bufferp}, $start, $length);
-		    if ($log->is_debug && $token eq 'LONGNAME') {
-			$log->debugf('%s "%s")', $token, $string);
-		    } elsif ($log->is_trace) {
-			$log->tracef('lexeme_read(token=%s, start=%d, length=%d, string="%s")', $token, $start, $length, $string);
-		    }
-		    $recce->lexeme_read($token, $start, $length, $string);
-		    $ok = 1;
-		    last;
-		} else {
-		    if ($log->is_trace) {
-			$log->tracef('\"%s\"... does not match %s', substr(${$bufferp}, $start, 20), $re);
-		    }
-		}
-	    }
-	}
-	die "Unmatched token in @expected, current portion of string is \"$string\"" if (! $ok);
-	pos(${$bufferp}) = $prev;
+        my @expected = @{$recce->terminals_expected()};
+        my $prev = pos(${$bufferp});
+        pos(${$bufferp}) = $start;
+        my $ok = 0;
+        if ($log->is_trace) {
+            $log->tracef('Expected terminals: %s', \@expected);
+        }
+        foreach (@{$tokensrep}) {
+            my ($token, $re) = @{$_};
+            if ((grep {$_ eq $token} @expected)) {
+                if (${$bufferp} =~ $re) {
+                    $length = $+[1] - $-[1];
+                    $string = substr(${$bufferp}, $start, $length);
+                    if ($log->is_debug && $token eq 'LONGNAME') {
+                        $log->debugf('%s "%s")', $token, $string);
+                    } elsif ($log->is_trace) {
+                        $log->tracef('lexeme_read(token=%s, start=%d, length=%d, string="%s")', $token, $start, $length, $string);
+                    }
+                    $recce->lexeme_read($token, $start, $length, $string);
+                    $ok = 1;
+                    last;
+                } else {
+                    if ($log->is_trace) {
+                        $log->tracef('\"%s\"... does not match %s', substr(${$bufferp}, $start, 20), $re);
+                    }
+                }
+            }
+        }
+        die "Unmatched token in @expected, current portion of string is \"$string\"" if (! $ok);
+        pos(${$bufferp}) = $prev;
     },
 );
 
@@ -163,18 +163,18 @@ sub value {
     # Another parse tree value ?
     #
     if (defined($self->{_R}->value())) {
-	my $msg = 'Ambigous parse tree detected';
-	if ($log->is_fatal) {
-	    $log->fatalf('%s', $msg);
-	}
-	croak $msg;
+        my $msg = 'Ambigous parse tree detected';
+        if ($log->is_fatal) {
+            $log->fatalf('%s', $msg);
+        }
+        croak $msg;
     }
     if (! defined($rc)) {
-	my $msg = 'Parse tree failure';
-	if ($log->is_fatal) {
-	    $log->fatalf('%s', $msg);
-	}
-	croak $msg;
+        my $msg = 'Parse tree failure';
+        if ($log->is_fatal) {
+            $log->fatalf('%s', $msg);
+        }
+        croak $msg;
     }
     return $rc
 }

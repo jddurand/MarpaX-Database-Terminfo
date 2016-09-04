@@ -15,8 +15,8 @@ BEGIN { $path = path(File::Spec->curdir)->absolute->stringify;
 use Test::File::ShareDir
     -root  =>  $path,
     -share =>  {
-	-module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
-	-dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
+        -module => { 'MarpaX::Database::Terminfo' => File::Spec->curdir },
+        -dist => { 'MarpaX-Database-Terminfo' => File::Spec->curdir },
 };
 #------------------------------------------------------
 BEGIN {
