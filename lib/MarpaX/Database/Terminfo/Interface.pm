@@ -257,7 +257,7 @@ sub new {
             }
         }
         if (! $cached_stubs_as_txt_ok && $stubs_bin) {
-	    $cached_stubs_as_txt_ok = _load_sereal($stubs_bin, $cached_stubs_as_txt);
+            $cached_stubs_as_txt_ok = _load_sereal($stubs_bin, $cached_stubs_as_txt);
         }
     }
 
@@ -295,32 +295,32 @@ sub _load_sereal {
 
     my $fh;
     if ($log->is_debug) {
-	$log->debugf('Loading %s', $bin);
+        $log->debugf('Loading %s', $bin);
     }
     if (! open($fh, '<', $bin)) {
-	carp "Cannot open $bin, $!";
+        carp "Cannot open $bin, $!";
     } else {
-	if (! binmode $fh) {
-	    carp "Cannot binmode $bin, $!";
-	} else {
-	    my @stat = stat($fh);
-	    if (! @stat) {
-		carp "Cannot stat $bin, $!";
-	    } else {
-		my $bytes = $stat[7];
-		my $blob;
-		if (read($fh, $blob, $bytes) != $bytes) {
-		    carp "Cannot read $bytes bytes from $bin, $!";
-		} else {
-		    my $decoder = Sereal::Decoder->new();
-		    eval {
-			$decoder->decode($blob, $_[0]);
-			$rc = 1;
-		    } || carp "Cannot deserialize $bin, $@";
-		}
-	    }
-	}
-	close($fh) || carp "Cannot close $bin, $!";
+        if (! binmode $fh) {
+            carp "Cannot binmode $bin, $!";
+        } else {
+            my @stat = stat($fh);
+            if (! @stat) {
+                carp "Cannot stat $bin, $!";
+            } else {
+                my $bytes = $stat[7];
+                my $blob;
+                if (read($fh, $blob, $bytes) != $bytes) {
+                    carp "Cannot read $bytes bytes from $bin, $!";
+                } else {
+                    my $decoder = Sereal::Decoder->new();
+                    eval {
+                        $decoder->decode($blob, $_[0]);
+                        $rc = 1;
+                    } || carp "Cannot deserialize $bin, $@";
+                }
+            }
+        }
+        close($fh) || carp "Cannot close $bin, $!";
     }
 
     return $rc;
