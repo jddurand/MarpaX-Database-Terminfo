@@ -2,7 +2,7 @@
 use strict;
 use diagnostics;
 use Data::Dumper;
-use Storable qw/nstore_fd/;
+use Sereal::Encoder 3.015 qw/encode_sereal/;
 use POSIX qw/EXIT_SUCCESS/;
 use Log::Log4perl qw/:easy/;
 use Log::Any::Adapter;
@@ -25,7 +25,7 @@ BEGIN {
     unshift(@INC, 'lib');
 }
 use MarpaX::Database::Terminfo::Interface qw/:all/;
-$ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.storable');
+$ENV{MARPAX_DATABASE_TERMINFO_BIN} = File::Spec->catfile('share', 'ncurses-terminfo.sereal');
 $ENV{MARPAX_DATABASE_TERMINFO_CAPS} = File::Spec->catfile('share', 'ncurses-Caps');
 $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT} = '';
 $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} = '';
@@ -45,11 +45,14 @@ foreach (sort keys %alias) {
     $t->tgetent($_);
 }
 {
-    my $outfile = File::Spec->catfile('share', 'ncurses-terminfo-stubs.storable');
+    my $outfile = File::Spec->catfile('share', 'ncurses-terminfo-stubs.sereal');
     open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
-    print STDERR "Writing ncurses stubs (as text) with Storable into $outfile\n";
-    nstore_fd $t->{_cached_stubs_as_txt}, \*OUTFILE;
-    close(OUTFILE) || warn "Cannot close $outfile, $!\n";
+    binmode(OUTFILE) || die "Cannot binmode $outfile; $!";
+    print STDERR "Writing ncurses stubs (as text) with Sereal into $outfile\n";
+    my $encoder = Sereal::Encoder->new();
+    my $out = $encoder->encode($t->{_cached_stubs_as_txt});
+    print OUTFILE $out || die "Cannot print to $outfile; $!";
+    close(OUTFILE) || die "Cannot close $outfile, $!\n";
 }
 {
     local $Data::Dumper::Purity = 1;
@@ -57,6 +60,6 @@ foreach (sort keys %alias) {
     open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
     print STDERR "Writing ncurses stubs (as text) with Data::Dumper into $outfile\n";
     print OUTFILE Dumper($t->{_cached_stubs_as_txt});
-    close(OUTFILE) || warn "Cannot close $outfile, $!\n";
+    close(OUTFILE) || die "Cannot close $outfile, $!\n";
 }
 exit(EXIT_SUCCESS);

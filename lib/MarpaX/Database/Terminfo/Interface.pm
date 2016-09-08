@@ -7,7 +7,7 @@ use MarpaX::Database::Terminfo::String;
 use MarpaX::Database::Terminfo::Constants qw/:all/;
 use File::ShareDir qw/:ALL/;
 use Carp qw/carp croak/;
-use Storable qw/fd_retrieve/;
+use Sereal::Decoder 3.015 qw/decode_sereal/;
 use Time::HiRes qw/usleep/;
 use Log::Any qw/$log/;
 use constant BAUDBYTE => 9; # From GNU Ncurses: 9 = 7 bits + 1 parity + 1 stop
@@ -60,7 +60,7 @@ Text version of the terminfo database. This module will then parse it using Marp
 
 =item $opts->{bin} or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
 
-Path to a binary version of the terminfo database, created using Storable. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
+Path to a binary version of the terminfo database, created using Sereal. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
 
 =item $opts->{caps} or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
 
@@ -80,7 +80,7 @@ Path to a text version of the terminfo string features<->stubs mapping, created 
 
 =item $opts->{stubs_bin} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN}
 
-Path to a binary version of the terminfo string features<->stubs mapping, created using Storable module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
+Path to a binary version of the terminfo string features<->stubs mapping, created using Sereal module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
 
 =item $opts->{bsd_tputs} or $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS}
 
@@ -92,7 +92,7 @@ Initial value of use_env boolean, saying if lines and columns specified in termi
 
 =back
 
-Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
+Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Sereal version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
 
 =cut
 
@@ -107,7 +107,7 @@ sub new {
 
     my $file = $optp->{file} // $ENV{MARPAX_DATABASE_TERMINFO_FILE} // '';
     my $txt  = $optp->{txt}  // $ENV{MARPAX_DATABASE_TERMINFO_TXT}  // '';
-    my $bin  = $optp->{bin}  // $ENV{MARPAX_DATABASE_TERMINFO_BIN}  // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo.storable');
+    my $bin  = $optp->{bin}  // $ENV{MARPAX_DATABASE_TERMINFO_BIN}  // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo.sereal');
     my $caps = $optp->{caps} // $ENV{MARPAX_DATABASE_TERMINFO_CAPS} // (
         $^O eq 'aix'     ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.aix4')   :
         $^O eq 'hpux'    ? dist_file('MarpaX-Database-Terminfo', 'share/ncurses-Caps.hpux11') :
@@ -120,7 +120,7 @@ sub new {
     my $stubs_bin;
     if ($cache_stubs) {
         $stubs_txt   = $optp->{stubs_txt} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_TXT} // '';
-        $stubs_bin   = $optp->{stubs_bin} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo-stubs.storable');
+        $stubs_bin   = $optp->{stubs_bin} // $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN} // dist_file('MarpaX-Database-Terminfo', 'share/ncurses-terminfo-stubs.sereal');
     } else {
         $stubs_txt = '';
         $stubs_bin = '';
@@ -165,23 +165,7 @@ sub new {
             $db_ok = 1;
         }
     }
-    if (! $db_ok) {
-        my $fh;
-        if ($log->is_debug) {
-            $log->debugf('Loading %s', $bin);
-        }
-        if (! open($fh, '<', $bin)) {
-            carp "Cannot open $bin, $!";
-        } else {
-            eval {$db = fd_retrieve($fh)};
-            if ($@) {
-                carp "$bin: $@";
-            } else {
-                $db_ok = 1;
-            }
-            close($fh) || carp "Cannot close $bin, $!";
-        }
-    }
+    $db_ok = _load_sereal($bin, $db) unless $db_ok;
     if (! $db_ok) {
         croak 'Cannot get a valid terminfo database';
     }
@@ -273,21 +257,7 @@ sub new {
             }
         }
         if (! $cached_stubs_as_txt_ok && $stubs_bin) {
-            my $fh;
-            if ($log->is_debug) {
-                $log->debugf('Loading %s', $stubs_bin);
-            }
-            if (! open($fh, '<', $stubs_bin)) {
-                carp "Cannot open $stubs_bin, $!";
-            } else {
-                eval {$cached_stubs_as_txt = fd_retrieve($fh)};
-                if ($@) {
-                    carp "$stubs_bin: $@";
-                } else {
-                    $cached_stubs_as_txt_ok = 1;
-                }
-                close($fh) || carp "Cannot close $stubs_bin, $!";
-            }
+	    $cached_stubs_as_txt_ok = _load_sereal($stubs_bin, $cached_stubs_as_txt);
         }
     }
 
@@ -317,6 +287,43 @@ sub new {
     $self->_terminfo_init();
 
     return $self;
+}
+
+sub _load_sereal {
+    my $bin = shift;  # Output is on the stack at $_[0]
+    my $rc = 0;
+
+    my $fh;
+    if ($log->is_debug) {
+	$log->debugf('Loading %s', $bin);
+    }
+    if (! open($fh, '<', $bin)) {
+	carp "Cannot open $bin, $!";
+    } else {
+	if (! binmode $fh) {
+	    carp "Cannot binmode $bin, $!";
+	} else {
+	    my @stat = stat($fh);
+	    if (! @stat) {
+		carp "Cannot stat $bin, $!";
+	    } else {
+		my $bytes = $stat[7];
+		my $blob;
+		if (read($fh, $blob, $bytes) != $bytes) {
+		    carp "Cannot read $bytes bytes from $bin, $!";
+		} else {
+		    my $decoder = Sereal::Decoder->new();
+		    eval {
+			$decoder->decode($blob, $_[0]);
+			$rc = 1;
+		    } || carp "Cannot deserialize $bin, $@";
+		}
+	    }
+	}
+	close($fh) || carp "Cannot close $bin, $!";
+    }
+
+    return $rc;
 }
 
 =head2 _terminfo_db($self)
@@ -821,7 +828,11 @@ $indent
         if ($log->is_trace) {
             $log->tracef('Compiling \'%s\' stub', $featurevalue);
         }
-        $self->{_stubs}->{$featurevalue} = eval $stub_as_txt;  ## no critic
+        #
+        # Untaint data
+        #
+        my ($untainted) = $stub_as_txt =~ m/(.*)/s;
+        $self->{_stubs}->{$featurevalue} = eval $untainted;  ## no critic
         if ($@) {
             carp "Problem with $featurevalue\n$stub_as_txt\n$@\nReplaced by a stub returning empty string...";
             $self->{_stubs}->{$featurevalue} = sub {return '';};

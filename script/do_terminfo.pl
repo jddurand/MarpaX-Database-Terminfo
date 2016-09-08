@@ -1,7 +1,7 @@
 #!env perl
 use strict;
 use diagnostics;
-use Storable qw/nstore_fd/;
+use Sereal::Encoder 3.015 qw/encode_sereal/;
 use POSIX qw/EXIT_SUCCESS/;
 
 BEGIN {
@@ -13,11 +13,15 @@ my $terminfo = MarpaX::Database::Terminfo->new();
 my $buffer = do {local $/; <DATA>;};
 print STDERR "Generating ncurses terminfo perl-ready database - be patient\n";
 my $value = $terminfo->parse(\$buffer)->value();
-my $outfile = File::Spec->catfile('share', 'ncurses-terminfo.storable');
+my $outfile = File::Spec->catfile('share', 'ncurses-terminfo.sereal');
 open(OUTFILE, '>', $outfile) || die "Cannot open $outfile; $!";
-print STDERR "Writing ncurses database with Storable into $outfile\n";
-nstore_fd ${$value}, \*OUTFILE;
-close(OUTFILE) || warn "Cannot close $outfile, $!\n";
+binmode(OUTFILE) || die "Cannot binmode $outfile; $!";
+print STDERR "Encoding ncurses database with Sereal\n";
+my $encoder = Sereal::Encoder->new();
+my $out = $encoder->encode(${$value});
+print STDERR "Writing ncurses database encoded with Sereal into $outfile\n";
+print OUTFILE $out || die "Cannot print to $outfile; $!";
+close(OUTFILE) || die "Cannot close $outfile, $!\n";
 exit(EXIT_SUCCESS);
 
 __DATA__
