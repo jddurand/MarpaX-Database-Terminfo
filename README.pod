@@ -8,7 +8,7 @@ MarpaX::Database::Terminfo::Interface - Terminfo interface
 
 =head1 VERSION
 
-version 0.011
+version 0.012
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ Text version of the terminfo database. This module will then parse it using Marp
 
 =item $opts->{bin} or $ENV{MARPAX_DATABASE_TERMINFO_BIN}
 
-Path to a binary version of the terminfo database, created using Storable. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
+Path to a binary version of the terminfo database, created using Sereal. This module is distributed with such a binary file, which contains the GNU ncurses definitions. The default behaviour is to use this file.
 
 =item $opts->{caps} or $ENV{MARPAX_DATABASE_TERMINFO_CAPS}
 
@@ -73,7 +73,7 @@ Path to a text version of the terminfo string features<->stubs mapping, created 
 
 =item $opts->{stubs_bin} or $ENV{MARPAX_DATABASE_TERMINFO_STUBS_BIN}
 
-Path to a binary version of the terminfo string features<->stubs mapping, created using Storable module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
+Path to a binary version of the terminfo string features<->stubs mapping, created using Sereal module. The content of this file is the text version of all stubs, that will all be compiled if needed. This option is used only if cache_stubs is on. This module is distributed with such a binary file, which contains the GNU ncurses stubs definitions. The default behaviour is to use this file.
 
 =item $opts->{bsd_tputs} or $ENV{MARPAX_DATABASE_TERMINFO_BSD_TPUTS}
 
@@ -85,7 +85,7 @@ Initial value of use_env boolean, saying if lines and columns specified in termi
 
 =back
 
-Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Storable version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
+Default terminal setup is done using the $ENV{TERM} environment variable, if it exist, or 'unknown'. The database used is not a compiled database as with GNU ncurses, therefore the environment variable TERMINFO is not used. Instead, a compiled database should a perl's Sereal version of a text database parsed by Marpa. See $ENV{MARPAX_DATABASE_TERMINFO_BIN} upper.
 
 =head2 _terminfo_db($self)
 

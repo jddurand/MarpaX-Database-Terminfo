@@ -1,6 +1,13 @@
 Changelog for MarpaX-Database-Terminfo
 
-0.011 2016-09-04T07:40:36
+0.012 2016-09-08T07:53:50
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - untabify
+ - Untaint
+ - Switch to Sereal - encoding bytes for build
+ - Switch to Sereal - fixes #2
+
+0.011 2016-09-04T07:40:36Z
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
  - Disable CheckExtraTests
  - POD spelling
