@@ -30,7 +30,12 @@ $t->tgetent('ibcs2');
 my $cupp = $t->tigetstr('cup'); # \E[%i%p1%d;%p2%dH
 my $got = '';
 my $wanted = "\e" . chr(91) . chr(49) . chr(57) . chr(59) . chr(52) . chr(49) . chr(72) . chr(0);
-$t->tputs($t->tgoto(${$cupp} . '$<1000>', 40, 18), 1, \&outc);
+#
+# Untaint data
+#
+my $input = ${$cupp} . '$<1000>';
+my ($untainted) = $input =~ m/(.*)/s;
+$t->tputs($t->tgoto($untainted, 40, 18), 1, \&outc);
 is($got, $wanted, 'cup at 18:40 under terminal ibcs2 that have no pad_char');
 
 sub outc {
