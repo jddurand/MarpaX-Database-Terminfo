@@ -20,7 +20,7 @@ use Test::File::ShareDir
 };
 #------------------------------------------------------
 BEGIN {
-    use_ok( 'MarpaX::Database::Terminfo::Interface', qw/:all/ ) || print "Bail out!\n";
+    use_ok( 'MarpaX::Database::Terminfo::Interface' ) || print "Bail out!\n";
 }
 my $t = MarpaX::Database::Terminfo::Interface->new();
 $t->tgetent('nsterm-16color');
